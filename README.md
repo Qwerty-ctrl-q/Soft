@@ -1,4 +1,18 @@
-# Monster Run
+# Games
+
+## INK DREAM
+
+A single-file monochrome point-and-click puzzle game inspired by the mechanics of
+HER TREES : PUZZLE DREAM (an original fan-style homage — own art, own puzzles).
+Drag and combine objects; the right overlap reveals hidden letters, letters form
+codes, codes open doors deeper into the dream. 3 zones, 9 puzzles, 3 codes,
+hint system, autosave, WebAudio sound.
+
+**Play:** open `ink-dream.html` in any browser (mouse or touch).
+
+Full research/analysis of the original game: `her-trees-puzzle-dream-analysis.md`.
+
+## Monster Run
 
 A single-file HTML5 canvas survivors-like — a fan remake inspired by the gameplay of Mattle Run (guest.mattle.fun).
 

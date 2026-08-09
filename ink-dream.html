@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>INK DREAM — сон-головоломка</title>
+<style>
+  :root { --paper:#EFEEE8; --ink:#22231F; --muted:#75776F; --line:#C6C8C0; --panel:#E5E4DD; }
+  * { box-sizing:border-box; }
+  html,body { margin:0; padding:0; }
+  body {
+    background:var(--paper); color:var(--ink);
+    font-family: Georgia, "Times New Roman", serif;
+    min-height:100vh; display:flex; flex-direction:column; align-items:center;
+    -webkit-user-select:none; user-select:none;
+  }
+  #wrap { width:100%; max-width:1000px; padding:10px 12px 24px; }
+  #topbar { display:flex; align-items:baseline; justify-content:space-between; padding:6px 4px; }
+  #ttl { font-size:15px; letter-spacing:.28em; }
+  #zonelabel { font-size:13px; letter-spacing:.18em; color:var(--muted); }
+  #stagebox { position:relative; border:1px solid var(--ink); background:var(--paper); }
+  svg#stage { display:block; width:100%; height:auto; touch-action:none; }
+
+  /* ink drawing defaults */
+  .ink { stroke:var(--ink); fill:none; stroke-width:2.6; stroke-linecap:round; stroke-linejoin:round; }
+  .fillink { fill:var(--ink); stroke:none; }
+  .thin { stroke-width:1.4; }
+  .piece { cursor:grab; }
+  .piece.drag { cursor:grabbing; }
+  .piece.placed { cursor:default; }
+  .clicky { cursor:pointer; }
+  .hiddenEl { display:none !important; }
+  .ghost { stroke:var(--muted); stroke-dasharray:4 6; fill:none; stroke-width:1.6; animation:ghostfade 4s forwards; }
+  @keyframes ghostfade { 0%{opacity:0} 12%{opacity:.9} 80%{opacity:.9} 100%{opacity:0} }
+
+  .letterReveal path { stroke:var(--ink); fill:none; stroke-width:5; stroke-linecap:round; stroke-linejoin:round; }
+  .letterReveal.draw path { stroke-dasharray:300; stroke-dashoffset:300; animation:drawpath 1.1s ease forwards; }
+  @keyframes drawpath { to { stroke-dashoffset:0; } }
+
+  .doorleaf { transform-box:fill-box; transform-origin:left center; transition:transform 1.1s ease; }
+  .gate.open .doorleaf { transform:rotate(-72deg); }
+  .cupdoor { transition:opacity 1s ease; }
+  .opencup .cupdoor { opacity:0; pointer-events:none; }
+
+  /* HUD */
+  #hud { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:10px; flex-wrap:wrap; }
+  #tray { display:flex; gap:6px; min-height:40px; align-items:center; flex-wrap:wrap; }
+  .chip {
+    width:36px; height:36px; border:1.5px solid var(--ink); display:flex; align-items:center; justify-content:center;
+    font-size:20px; background:var(--panel); animation:pop .35s ease;
+  }
+  @keyframes pop { 0%{transform:scale(.2)} 70%{transform:scale(1.15)} 100%{transform:scale(1)} }
+  .btn {
+    font-family:inherit; font-size:14px; letter-spacing:.06em; padding:8px 14px;
+    background:var(--paper); color:var(--ink); border:1.5px solid var(--ink); cursor:pointer;
+  }
+  .btn:disabled { opacity:.35; cursor:default; }
+  .btn:focus-visible { outline:2px solid var(--ink); outline-offset:2px; }
+  #navRow { display:flex; gap:8px; }
+
+  /* overlays */
+  .overlay {
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    background:color-mix(in srgb, var(--paper) 88%, transparent);
+  }
+  .card {
+    background:var(--paper); border:1.5px solid var(--ink); padding:28px 32px; max-width:420px; width:min(92%,420px);
+    text-align:center; box-shadow:6px 6px 0 color-mix(in srgb, var(--ink) 12%, transparent);
+  }
+  .card h1 { margin:0 0 4px; font-size:30px; letter-spacing:.3em; font-weight:400; }
+  .card .sub { color:var(--muted); font-size:14px; margin:0 0 18px; }
+  .card p { font-size:14px; line-height:1.6; margin:0 0 16px; }
+  #panelSlots { display:flex; gap:8px; justify-content:center; margin:14px 0 18px; }
+  .slot { width:44px; height:52px; border:1.5px solid var(--ink); font-size:26px; display:flex; align-items:center; justify-content:center; background:var(--panel); }
+  #panelGrid { display:grid; grid-template-columns:repeat(6,1fr); gap:6px; margin-bottom:14px; }
+  .key { padding:10px 0; border:1px solid var(--ink); background:var(--paper); font-size:18px; cursor:pointer; font-family:inherit; }
+  .key.have { background:var(--panel); box-shadow:inset 0 0 0 1px var(--ink); }
+  .shake { animation:shake .4s; }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-8px)} 75%{transform:translateX(8px)} }
+  @media (prefers-reduced-motion: reduce) {
+    .letterReveal.draw path { animation:none; stroke-dashoffset:0; }
+    .chip { animation:none; }
+  }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="topbar">
+    <span id="ttl">INK DREAM</span>
+    <span id="zonelabel"></span>
+  </div>
+
+  <div id="stagebox">
+  <svg id="stage" viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" aria-label="Сцена сна">
+    <defs>
+      <filter id="rough"><feTurbulence type="fractalNoise" baseFrequency="0.015" numOctaves="2" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="4"/></filter>
+      <filter id="soft"><feGaussianBlur stdDeviation="2.2"/></filter>
+    </defs>
+
+    <!-- ============ ZONE 0 : THE TREE ============ -->
+    <g id="zone0">
+      <g class="ink" filter="url(#rough)">
+        <path d="M0 478 Q 240 462 480 474 T 960 470" />
+        <circle cx="140" cy="110" r="42" class="thin"/>
+        <path d="M118 96 q 8 -6 16 0" class="thin"/><path d="M146 122 q 7 -5 13 1" class="thin"/>
+        <!-- tree -->
+        <path d="M598 476 Q 592 380 600 320 Q 606 260 612 236 M 632 476 Q 636 390 628 330 Q 622 270 616 236" />
+        <path d="M612 240 Q 560 210 528 224 M 612 238 Q 660 196 704 208 M 610 250 Q 566 262 522 268 M 616 244 Q 664 240 700 252" />
+        <path d="M528 224 Q 510 216 538 218 M 704 208 Q 720 200 712 216" class="thin"/>
+        <!-- hanging frame for P2 -->
+        <path d="M357 128 L 357 108 Q 357 96 372 100" class="thin"/>
+        <rect x="298" y="128" width="118" height="146" class="thin"/>
+        <!-- grass ticks -->
+        <path d="M80 486 l 4 -14 M 96 488 l 5 -12 M 250 490 l 4 -13 M 420 486 l 5 -12 M 760 482 l 4 -13 M 860 484 l 5 -12" class="thin"/>
+      </g>
+
+      <!-- gate 0 : door in the trunk -->
+      <g id="gate0" class="gate clicky">
+        <path d="M596 476 L 596 430 Q 614 412 632 430 L 632 476" class="ink"/>
+        <g class="doorleaf">
+          <path d="M598 474 L 598 432 Q 614 416 630 432 L 630 474 Z" class="ink" style="fill:var(--panel)"/>
+          <circle cx="624" cy="454" r="2.4" class="fillink"/>
+        </g>
+      </g>
+
+      <!-- P3 stubs on trunk -->
+      <g>
+        <circle id="stub_p3a" class="clicky stub ink" cx="598" cy="430" r="6"/>
+        <circle id="stub_p3b" class="clicky stub ink" cx="617" cy="382" r="6"/>
+        <circle id="stub_p3c" class="clicky stub ink" cx="601" cy="334" r="6"/>
+      </g>
+      <!-- P3 target twigs in crown -->
+      <g class="ink thin">
+        <path d="M538 222 l -12 -10 M 572 252 l -14 -6 M 518 268 l -12 -4"/>
+      </g>
+
+      <!-- pieces zone0 -->
+      <g id="p1a" class="piece"><path class="ink" d="M 22 -14 Q -20 -26 -18 4" stroke-width="4"/></g>
+      <g id="p1b" class="piece"><path class="ink" d="M -16 -4 Q 24 0 18 14 Q 10 26 -20 18" stroke-width="4"/></g>
+
+      <g id="p2a" class="piece">
+        <path class="ink" d="M -54 -19 L 50 -23 L 55 17 L -49 21 Z" style="fill:var(--paper)"/>
+        <path class="ink" d="M -13 -8 L -13 17 M 13 -10 L 13 17" stroke-width="4"/>
+      </g>
+      <g id="p2b" class="piece">
+        <path class="ink" d="M -51 -20 L 53 -18 L 50 20 L -54 18 Z" style="fill:var(--paper)"/>
+        <path class="ink" d="M -13 -16 L -13 18 M 13 -16 L 13 18" stroke-width="4"/>
+      </g>
+      <g id="p2c" class="piece">
+        <path class="ink" d="M -53 -18 L 51 -22 L 54 19 L -50 22 Z" style="fill:var(--paper)"/>
+        <path class="ink" d="M -13 -16 Q -13 12 0 12 Q 13 12 13 -16" stroke-width="4"/>
+      </g>
+
+      <g id="p3a" class="piece hiddenEl"><path class="ink" d="M 0 0 Q 12 -15 27 -4 Q 14 10 0 0 Z" style="fill:var(--panel)"/></g>
+      <g id="p3b" class="piece hiddenEl"><path class="ink" d="M 0 0 Q 13 -13 26 -2 Q 12 11 0 0 Z" style="fill:var(--panel)"/></g>
+      <g id="p3c" class="piece hiddenEl"><path class="ink" d="M 0 0 Q 11 -16 25 -6 Q 15 9 0 0 Z" style="fill:var(--panel)"/></g>
+
+      <!-- letter reveals zone0 -->
+      <g id="L_p1" class="letterReveal hiddenEl" transform="translate(760 150)"><circle r="38" style="fill:var(--paper);opacity:.85" stroke="none"/><path d="M 18 -22 Q -20 -34 -20 -10 Q -20 6 2 4 Q 22 2 20 18 Q 18 34 -18 24"/></g>
+      <g id="L_p2" class="letterReveal hiddenEl" transform="translate(357 330)"><circle r="38" style="fill:var(--paper);opacity:.85" stroke="none"/><path d="M -20 -28 L -20 10 Q -20 30 0 30 Q 20 30 20 10 L 20 -28"/></g>
+      <g id="L_p3" class="letterReveal hiddenEl" transform="translate(470 160)"><circle r="38" style="fill:var(--paper);opacity:.85" stroke="none"/><path d="M -20 28 L -20 -28 L 20 28 L 20 -28"/></g>
+    </g>
+
+    <!-- ============ ZONE 1 : THE ROOM ============ -->
+    <g id="zone1" style="display:none">
+      <g class="ink" filter="url(#rough)">
+        <path d="M0 470 L 960 470"/>
+        <!-- window with moon (continuity) -->
+        <rect x="110" y="120" width="120" height="150" class="thin"/>
+        <path d="M170 120 V 270 M 110 195 H 230" class="thin"/>
+        <circle cx="196" cy="162" r="18" class="thin"/>
+        <!-- table -->
+        <path d="M420 372 H 760 M 435 372 L 430 470 M 745 372 L 750 470"/>
+        <!-- jars on table edge -->
+        <path d="M450 372 v -26 q 0 -6 8 -6 h 12 q 8 0 8 6 v 26 M 452 344 h 34" class="thin"/>
+        <!-- wall device for discs -->
+        <rect x="272" y="136" width="96" height="222" class="thin"/>
+        <!-- cupboard -->
+        <rect x="788" y="278" width="94" height="192" class="ink"/>
+      </g>
+
+      <!-- cupboard door + hidden K inside -->
+      <g id="cupboard">
+        <g id="L_p4" class="letterReveal hiddenEl" transform="translate(835 360)"><circle r="38" style="fill:var(--paper);opacity:.85" stroke="none"/><path d="M -18 -28 L -18 28 M 18 -28 L -18 2 M -6 -8 L 20 28"/></g>
+        <g class="cupdoor">
+          <rect x="790" y="280" width="90" height="188" class="ink" style="fill:var(--panel)"/>
+          <circle cx="830" cy="332" r="7" class="ink"/>
+          <path d="M830 332 l 0 12" class="ink"/>
+        </g>
+      </g>
+
+      <!-- spoon (static until merged) -->
+      <g id="spoon" class="ink"><ellipse cx="470" cy="356" rx="12" ry="7"/><path d="M482 355 Q 510 352 526 350"/></g>
+
+      <!-- discs P5 -->
+      <g id="d1" class="clicky"><circle cx="320" cy="176" r="30" class="ink"/><g id="d1r"><path class="ink" d="M 300 176 H 340 M 320 176 V 158" stroke-width="4"/></g></g>
+      <g id="d2" class="clicky"><circle cx="320" cy="246" r="30" class="ink"/><g id="d2r"><path class="ink" d="M 302 246 H 338 M 320 246 V 230" stroke-width="4"/></g></g>
+      <g id="d3" class="clicky"><circle cx="320" cy="316" r="30" class="ink"/><g id="d3r"><path class="ink" d="M 304 316 H 336 M 320 316 V 298" stroke-width="4"/></g></g>
+      <g id="L_p5" class="letterReveal hiddenEl" transform="translate(320 420)"><circle r="38" style="fill:var(--paper);opacity:.85" stroke="none"/><path d="M 18 -28 L -16 -28 L -16 28 L 18 28 M -16 0 L 12 0"/></g>
+
+      <!-- plate shadow + shards P6 -->
+      <ellipse cx="608" cy="304" rx="52" ry="40" class="ink thin" stroke-dasharray="3 6" fill="none"/>
+      <g id="p6a" class="piece"><path class="ink" d="M -24 -18 L 22 -22 L 18 14 L -20 16 Z" style="fill:var(--paper)"/><path class="ink" d="M -8 -14 L -2 12" stroke-width="4"/></g>
+      <g id="p6b" class="piece"><path class="ink" d="M -22 -20 L 24 -16 L 20 18 L -18 14 Z" style="fill:var(--paper)"/><path class="ink" d="M -14 -12 L 4 10" stroke-width="4"/></g>
+      <g id="p6c" class="piece"><path class="ink" d="M -20 -16 L 22 -18 L 24 16 L -22 18 Z" style="fill:var(--paper)"/><path class="ink" d="M 2 -12 L 2 14" stroke-width="4"/></g>
+      <g id="p6d" class="piece"><path class="ink" d="M -24 -14 L 20 -18 L 22 16 L -18 18 Z" style="fill:var(--paper)"/><path class="ink" d="M -10 -12 L 0 -2" stroke-width="4"/></g>
+      <g id="L_p6" class="letterReveal hiddenEl" transform="translate(608 304)"><circle r="38" style="fill:var(--paper);opacity:.85" stroke="none"/><path d="M -20 -28 L 0 0 L 20 -28 M 0 0 L 0 28"/></g>
+
+      <!-- twig & key pieces -->
+      <g id="p4twig" class="piece"><path class="ink" d="M -26 6 Q 0 -8 26 -2 M 4 -4 L 10 -14" stroke-width="3.4"/></g>
+      <g id="p4key" class="piece hiddenEl"><circle cx="-16" cy="0" r="8" class="ink"/><path class="ink" d="M -8 0 H 22 M 12 0 V 9 M 19 0 V 9" stroke-width="3.4"/></g>
+
+      <!-- gate 1 : arch door in right wall -->
+      <g id="gate1" class="gate clicky" transform="translate(908 0)">
+        <path d="M-16 470 L -16 402 Q 8 380 32 402 L 32 470" class="ink"/>
+        <g class="doorleaf">
+          <path d="M-14 468 L -14 404 Q 8 386 30 404 L 30 468 Z" class="ink" style="fill:var(--panel)"/>
+          <circle cx="22" cy="438" r="2.4" class="fillink"/>
+        </g>
+      </g>
+    </g>
+
+    <!-- ============ ZONE 2 : THE LAKE ============ -->
+    <g id="zone2" style="display:none">
+      <g class="ink" filter="url(#rough)">
+        <path d="M0 382 H 960"/>
+        <path d="M60 430 q 30 -8 60 0 M 300 450 q 34 -8 68 0 M 620 436 q 30 -8 60 0 M 800 456 q 26 -6 52 0 M 180 500 q 40 -10 80 0 M 480 520 q 40 -10 80 0" class="thin"/>
+        <!-- dead tree left -->
+        <path d="M140 382 Q 134 300 142 250 Q 148 210 144 190 M 162 382 Q 168 310 160 258 M 144 210 Q 110 180 92 184 M 146 200 Q 180 168 204 174"/>
+        <!-- pedestal stone -->
+        <path d="M312 448 Q 350 434 390 448 L 384 462 L 318 462 Z"/>
+        <!-- mirror frame -->
+        <path d="M826 240 Q 852 226 878 240 L 882 396 Q 852 410 822 396 Z" class="thin"/>
+        <path d="M852 240 V 402" class="thin" stroke-dasharray="3 7"/>
+      </g>
+
+      <!-- moon piece + reflection -->
+      <g id="p7m" class="piece"><circle cx="0" cy="0" r="40" class="ink" style="fill:var(--paper)"/><path d="M-14 -10 q 8 -6 15 0 M 6 12 q 7 -5 13 1" class="ink thin"/></g>
+      <g id="reflection" class="hiddenEl">
+        <circle cx="700" cy="470" r="40" class="ink thin" filter="url(#soft)"/>
+      </g>
+      <g id="L_p7" class="letterReveal hiddenEl" transform="translate(700 470)"><circle r="38" style="fill:var(--paper);opacity:.85" stroke="none"/><path d="M 18 -28 L -16 -28 L -16 28 L 18 28 M -16 0 L 12 0"/></g>
+
+      <!-- stones -->
+      <g id="p8a" class="piece"><path class="ink" d="M -36 4 Q -34 -16 0 -16 Q 36 -16 36 4 Q 30 16 0 16 Q -30 16 -36 4 Z" style="fill:var(--panel)"/></g>
+      <g id="p8b" class="piece"><path class="ink" d="M -26 3 Q -24 -12 0 -12 Q 26 -12 26 3 Q 22 12 0 12 Q -22 12 -26 3 Z" style="fill:var(--panel)"/></g>
+      <g id="p8c" class="piece"><path class="ink" d="M -16 2 Q -14 -9 0 -9 Q 16 -9 16 2 Q 12 8 0 8 Q -12 8 -16 2 Z" style="fill:var(--panel)"/></g>
+      <g id="L_p8" class="letterReveal hiddenEl" transform="translate(280 380)"><circle r="38" style="fill:var(--paper);opacity:.85" stroke="none"/><path d="M -20 28 L -20 -28 L 20 28 L 20 -28"/></g>
+
+      <!-- mirror half piece + its mirrored twin -->
+      <g id="p9h" class="piece"><path class="ink" d="M 0 -30 Q -28 -22 -24 2 Q -20 24 0 30 L 0 -30 Z" style="fill:var(--panel)"/></g>
+      <g id="p9twin" class="hiddenEl"><path class="ink" d="M 0 -30 Q 28 -22 24 2 Q 20 24 0 30 L 0 -30 Z" style="fill:var(--panel)" transform="translate(858 320)"/></g>
+      <g id="L_p9" class="letterReveal hiddenEl" transform="translate(852 180)"><circle r="38" style="fill:var(--paper);opacity:.85" stroke="none"/><path d="M -16 -28 L -16 28 M -16 -28 Q 24 -28 24 0 Q 24 28 -16 28"/></g>
+
+      <!-- gate 2 : floating door on the lake -->
+      <g id="gate2" class="gate clicky" transform="translate(548 0)">
+        <path d="M-20 452 Q 0 458 40 452 M -16 452 L -16 348 Q 6 328 28 348 L 28 452" class="ink"/>
+        <g class="doorleaf">
+          <path d="M-14 450 L -14 350 Q 6 332 26 350 L 26 450 Z" class="ink" style="fill:var(--panel)"/>
+          <circle cx="18" cy="402" r="2.4" class="fillink"/>
+        </g>
+      </g>
+    </g>
+
+    <!-- ghost layer -->
+    <g id="ghosts"></g>
+  </svg>
+
+  <!-- intro overlay -->
+  <div id="intro" class="overlay">
+    <div class="card">
+      <h1>INK DREAM</h1>
+      <p class="sub">сон-головоломка · чернила на бумаге</p>
+      <p>Тяни предметы и совмещай их — верное наложение проявит букву.<br>
+         Из букв складывается код. Код открывает дверь дальше в сон.<br>
+         Застрял — жми «?» под сценой.</p>
+      <button class="btn" id="startBtn">Войти в сон</button>
+      <button class="btn hiddenEl" id="contBtn" style="margin-left:8px">Продолжить</button>
+    </div>
+  </div>
+
+  <!-- code panel -->
+  <div id="panel" class="overlay hiddenEl">
+    <div class="card" id="panelCard">
+      <p class="sub" style="margin-bottom:4px">дверь заперта — введи код</p>
+      <div id="panelSlots"></div>
+      <div id="panelGrid"></div>
+      <button class="btn" id="panelClear">Стереть</button>
+      <button class="btn" id="panelClose" style="margin-left:8px">Отойти</button>
+    </div>
+  </div>
+
+  <!-- finale -->
+  <div id="finale" class="overlay hiddenEl">
+    <div class="card">
+      <svg viewBox="0 0 200 110" style="width:180px;margin:0 auto 10px;display:block">
+        <g stroke="var(--ink)" fill="none" stroke-width="2" stroke-linecap="round">
+          <circle cx="160" cy="26" r="16"/>
+          <path d="M60 100 Q 56 60 62 40 M 74 100 Q 78 64 72 42 M 67 44 Q 44 30 32 34 M 69 40 Q 92 22 108 28"/>
+          <path d="M120 100 q 0 -20 8 -26 q 6 -5 6 -12 a 6 6 0 1 1 4 0 q 0 7 6 12 q 8 6 8 26 z" fill="var(--ink)"/>
+          <path d="M10 100 H 190"/>
+        </g>
+      </svg>
+      <h1 style="font-size:22px">THE END</h1>
+      <p class="sub" id="finTime"></p>
+      <p>Сон досмотрен: 9 головоломок, 3 кода.</p>
+      <button class="btn" id="againBtn">Начать сон заново</button>
+    </div>
+  </div>
+  </div><!-- /stagebox -->
+
+  <div id="hud">
+    <div id="tray" aria-label="Собранные буквы"></div>
+    <div id="navRow">
+      <button class="btn" id="hintBtn" title="Показать, куда тянуть">?</button>
+      <button class="btn hiddenEl" id="solveBtn" title="Решить одну головоломку за меня">решить</button>
+      <button class="btn" id="prevBtn" disabled>‹</button>
+      <button class="btn" id="nextBtn" disabled>›</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+var svg = document.getElementById('stage');
+var TOL = 28;
+
+/* ---------- data ---------- */
+var PIECES = {
+  p1a:{p:'p1', x:150,y:520, tx:690,ty:158},
+  p1b:{p:'p1', x:300,y:545, tx:694,ty:198},
+  p2a:{p:'p2', x:95, y:330, tx:357,ty:160},
+  p2b:{p:'p2', x:190,y:430, tx:357,ty:202},
+  p2c:{p:'p2', x:500,y:525, tx:357,ty:244},
+  p3a:{p:'p3', x:520,y:530, tx:538,ty:222, hidden:true},
+  p3b:{p:'p3', x:555,y:548, tx:572,ty:252, hidden:true},
+  p3c:{p:'p3', x:585,y:520, tx:518,ty:268, hidden:true},
+  p4twig:{p:'p4', x:200,y:520, tx:470,ty:352},
+  p4key:{p:'p4', x:470,y:352, tx:830,ty:332, hidden:true},
+  p6a:{p:'p6', x:150,y:540, tx:585,ty:284},
+  p6b:{p:'p6', x:260,y:558, tx:630,ty:286},
+  p6c:{p:'p6', x:700,y:540, tx:588,ty:324},
+  p6d:{p:'p6', x:870,y:556, tx:628,ty:322},
+  p7m:{p:'p7', x:120,y:100, tx:700,ty:140},
+  p8a:{p:'p8', x:500,y:540, tx:350,ty:428},
+  p8b:{p:'p8', x:620,y:556, tx:350,ty:402, req:'p8a'},
+  p8c:{p:'p8', x:760,y:544, tx:350,ty:382, req:'p8b'},
+  p9h:{p:'p9', x:450,y:555, tx:846,ty:320}
+};
+var PUZZLES = {
+  p1:{zone:0, letter:'S', pieces:['p1a','p1b']},
+  p2:{zone:0, letter:'U', pieces:['p2a','p2b','p2c']},
+  p3:{zone:0, letter:'N', pieces:['p3a','p3b','p3c'], sprout:true},
+  p4:{zone:1, letter:'K', pieces:['p4twig','p4key'], merge:true},
+  p5:{zone:1, letter:'E', pieces:[], discs:true},
+  p6:{zone:1, letter:'Y', pieces:['p6a','p6b','p6c','p6d']},
+  p7:{zone:2, letter:'E', pieces:['p7m']},
+  p8:{zone:2, letter:'N', pieces:['p8a','p8b','p8c']},
+  p9:{zone:2, letter:'D', pieces:['p9h']}
+};
+var DISCS = { d1:{cur:3, goal:0, cy:176}, d2:{cur:1, goal:4, cy:246}, d3:{cur:5, goal:2, cy:316} };
+var CODES = ['SUN','KEY','END'];
+var GRID  = ['S','U','N','K','E','Y','D','A','M','O','R','T'];
+var ZONES = ['I · ДЕРЕВО','II · КОМНАТА','III · ОЗЕРО'];
+
+var S = { zone:0, solved:[], gates:[false,false,false], sprouted:[], start:Date.now(), zoneEnter:Date.now() };
+
+/* ---------- helpers ---------- */
+function $(id){ return document.getElementById(id); }
+function el(id){ return document.getElementById(id); }
+function setPos(id, x, y){ el(id).setAttribute('transform','translate('+x+' '+y+')'); PIECES[id].cx = x; PIECES[id].cy = y; }
+function svgPoint(evt){
+  var pt = svg.createSVGPoint();
+  pt.x = evt.clientX; pt.y = evt.clientY;
+  return pt.matrixTransform(svg.getScreenCTM().inverse());
+}
+function dist(ax,ay,bx,by){ var dx=ax-bx, dy=ay-by; return Math.sqrt(dx*dx+dy*dy); }
+function save(){
+  try { localStorage.setItem('inkdream', JSON.stringify({v:1, solved:S.solved, gates:S.gates, zone:S.zone, start:S.start})); } catch(e){}
+}
+function loadSave(){
+  try { return JSON.parse(localStorage.getItem('inkdream')||'null'); } catch(e){ return null; }
+}
+
+/* ---------- audio ---------- */
+var AC = null;
+function audio(){ if(!AC){ try{ AC = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } return AC; }
+function tone(f, dur, type, gain, delay){
+  var ac = audio(); if(!ac) return;
+  var t = ac.currentTime + (delay||0);
+  var o = ac.createOscillator(), g = ac.createGain();
+  o.type = type||'sine'; o.frequency.value = f;
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.linearRampToValueAtTime(gain||0.05, t+0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
+  o.connect(g); g.connect(ac.destination);
+  o.start(t); o.stop(t+dur+0.05);
+}
+var snd = {
+  click: function(){ tone(760,0.04,'square',0.015); },
+  snap:  function(){ tone(520,0.09,'triangle',0.05); tone(780,0.12,'triangle',0.04,0.05); },
+  letter:function(){ tone(660,0.18,'sine',0.06); tone(990,0.25,'sine',0.05,0.12); },
+  gate:  function(){ tone(196,0.5,'sine',0.07); tone(294,0.6,'sine',0.05,0.1); tone(392,0.7,'sine',0.04,0.2); },
+  wrong: function(){ tone(150,0.2,'sawtooth',0.03); }
+};
+
+/* ---------- init pieces ---------- */
+Object.keys(PIECES).forEach(function(id){
+  var d = PIECES[id];
+  setPos(id, d.x, d.y);
+  if(d.hidden) el(id).classList.add('hiddenEl');
+});
+
+/* ---------- drag ---------- */
+var dragId = null, dragOff = {x:0,y:0};
+svg.addEventListener('pointerdown', function(evt){
+  var g = evt.target.closest ? evt.target.closest('.piece') : null;
+  if(!g || g.classList.contains('placed') || g.classList.contains('hiddenEl')) return;
+  var id = g.id, d = PIECES[id];
+  if(!d || d.placed) return;
+  dragId = id;
+  var p = svgPoint(evt);
+  dragOff.x = p.x - d.cx; dragOff.y = p.y - d.cy;
+  g.classList.add('drag');
+  try { svg.setPointerCapture(evt.pointerId); } catch(e){}
+  snd.click();
+  evt.preventDefault();
+});
+svg.addEventListener('pointermove', function(evt){
+  if(!dragId) return;
+  var p = svgPoint(evt);
+  setPos(dragId, p.x - dragOff.x, p.y - dragOff.y);
+});
+svg.addEventListener('pointerup', function(evt){
+  if(!dragId) return;
+  var id = dragId; dragId = null;
+  el(id).classList.remove('drag');
+  var d = PIECES[id];
+  var ok = dist(d.cx, d.cy, d.tx, d.ty) < TOL;
+  if(ok && d.req && !PIECES[d.req].placed) ok = false;
+  if(ok) placePiece(id, false);
+});
+
+function placePiece(id, silent){
+  var d = PIECES[id];
+  if(d.placed) return;
+  d.placed = true;
+  setPos(id, d.tx, d.ty);
+  var g = el(id);
+  g.classList.add('placed');
+  g.classList.remove('hiddenEl');
+  if(!silent) snd.snap();
+  /* special hooks */
+  if(id === 'p4twig'){
+    g.classList.add('hiddenEl');
+    el('spoon').classList.add('hiddenEl');
+    var k = el('p4key');
+    k.classList.remove('hiddenEl');
+    PIECES.p4key.placed = false;
+    setPos('p4key', PIECES.p4key.x, PIECES.p4key.y);
+  }
+  if(id === 'p4key'){
+    g.classList.add('hiddenEl');
+    el('cupboard').classList.add('opencup');
+    setTimeout(function(){ el('L_p4').classList.remove('hiddenEl'); }, silent?0:600);
+  }
+  if(id === 'p7m'){ el('reflection').classList.remove('hiddenEl'); }
+  if(id === 'p9h'){ el('p9twin').classList.remove('hiddenEl'); }
+  checkPuzzle(d.p, silent);
+}
+
+/* ---------- discs ---------- */
+function rotDisc(id){
+  var D = DISCS[id];
+  el(id+'r').setAttribute('transform', 'rotate(' + (D.cur*60) + ' 320 ' + D.cy + ')');
+}
+['d1','d2','d3'].forEach(function(id){
+  el(id).addEventListener('click', function(){
+    if(S.solved.indexOf('p5') >= 0) return;
+    var D = DISCS[id];
+    D.cur = (D.cur + 1) % 6;
+    rotDisc(id);
+    snd.click();
+    checkPuzzle('p5', false);
+  });
+});
+function discsOk(){ return ['d1','d2','d3'].every(function(k){ return DISCS[k].cur === DISCS[k].goal; }); }
+/* apply initial disc rotation */
+['d1','d2','d3'].forEach(rotDisc);
+
+/* ---------- stubs (sprout leaves) ---------- */
+['p3a','p3b','p3c'].forEach(function(id){
+  el('stub_'+id).addEventListener('click', function(){
+    if(S.sprouted.indexOf(id) >= 0) return;
+    S.sprouted.push(id);
+    el(id).classList.remove('hiddenEl');
+    this.style.fill = 'var(--ink)';
+    snd.snap();
+  });
+});
+
+/* ---------- puzzles ---------- */
+function checkPuzzle(pid, silent){
+  if(S.solved.indexOf(pid) >= 0) return;
+  var P = PUZZLES[pid];
+  var done = P.discs ? discsOk() : P.pieces.every(function(id){ return PIECES[id].placed; });
+  if(!done) return;
+  S.solved.push(pid);
+  P.pieces.forEach(function(id){ el(id).classList.add('placed'); });
+  var L = el('L_'+pid);
+  if(L){
+    L.classList.remove('hiddenEl');
+    if(!silent) L.classList.add('draw');
+  }
+  addChip(P.letter, silent);
+  if(!silent) snd.letter();
+  save();
+}
+function addChip(letter, silent){
+  var c = document.createElement('div');
+  c.className = 'chip';
+  if(silent) c.style.animation = 'none';
+  c.textContent = letter;
+  $('tray').appendChild(c);
+}
+
+/* ---------- gates & code panel ---------- */
+var panelZone = -1, entered = [];
+[0,1,2].forEach(function(z){
+  el('gate'+z).addEventListener('click', function(){
+    if(S.gates[z]) return;
+    openPanel(z);
+  });
+});
+function openPanel(z){
+  panelZone = z; entered = [];
+  renderSlots();
+  var grid = $('panelGrid'); grid.innerHTML = '';
+  var collected = S.solved.map(function(pid){ return PUZZLES[pid].letter; });
+  GRID.forEach(function(ch){
+    var b = document.createElement('button');
+    b.className = 'key' + (collected.indexOf(ch) >= 0 ? ' have' : '');
+    b.textContent = ch;
+    b.addEventListener('click', function(){
+      if(entered.length >= CODES[panelZone].length) return;
+      entered.push(ch); snd.click(); renderSlots();
+      if(entered.length === CODES[panelZone].length) setTimeout(checkCode, 250);
+    });
+    grid.appendChild(b);
+  });
+  $('panel').classList.remove('hiddenEl');
+}
+function renderSlots(){
+  var s = $('panelSlots'); s.innerHTML = '';
+  for(var i=0;i<CODES[panelZone].length;i++){
+    var d = document.createElement('div');
+    d.className = 'slot';
+    d.textContent = entered[i] || '';
+    s.appendChild(d);
+  }
+}
+function checkCode(){
+  if(entered.join('') === CODES[panelZone]){
+    S.gates[panelZone] = true;
+    $('panel').classList.add('hiddenEl');
+    el('gate'+panelZone).classList.add('open');
+    snd.gate();
+    save();
+    if(panelZone === 2){ setTimeout(showFinale, 1400); }
+    else { setTimeout(function(){ gotoZone(panelZone+1); }, 1200); }
+  } else {
+    snd.wrong();
+    entered = [];
+    renderSlots();
+    $('panelCard').classList.add('shake');
+    setTimeout(function(){ $('panelCard').classList.remove('shake'); }, 450);
+  }
+  updateNav();
+}
+$('panelClear').addEventListener('click', function(){ entered = []; renderSlots(); });
+$('panelClose').addEventListener('click', function(){ $('panel').classList.add('hiddenEl'); });
+
+/* ---------- zones / nav ---------- */
+function gotoZone(z){
+  S.zone = z; S.zoneEnter = Date.now();
+  [0,1,2].forEach(function(i){ el('zone'+i).style.display = (i===z ? '' : 'none'); });
+  $('zonelabel').textContent = ZONES[z];
+  $('solveBtn').classList.add('hiddenEl');
+  updateNav(); save();
+}
+function updateNav(){
+  $('prevBtn').disabled = (S.zone === 0);
+  $('nextBtn').disabled = !(S.zone < 2 && S.gates[S.zone]);
+}
+$('prevBtn').addEventListener('click', function(){ if(S.zone>0) gotoZone(S.zone-1); });
+$('nextBtn').addEventListener('click', function(){ if(S.zone<2 && S.gates[S.zone]) gotoZone(S.zone+1); });
+
+/* ---------- hints ---------- */
+$('hintBtn').addEventListener('click', function(){
+  var layer = $('ghosts'); layer.innerHTML = '';
+  var any = false;
+  Object.keys(PIECES).forEach(function(id){
+    var d = PIECES[id];
+    if(PUZZLES[d.p].zone !== S.zone || d.placed) return;
+    if(el(id).classList.contains('hiddenEl') && id.indexOf('p3') === 0){
+      /* leaf not sprouted yet: ghost the stub */
+      var st = el('stub_'+id);
+      if(st){ ghostAt(+st.getAttribute('cx'), +st.getAttribute('cy'), 14); any = true; }
+      return;
+    }
+    if(el(id).classList.contains('hiddenEl')) return;
+    ghostAt(d.tx, d.ty, 30); any = true;
+  });
+  if(S.zone === 1 && S.solved.indexOf('p5') < 0){ ghostAt(320, 246, 48); any = true; }
+  if(!any){ /* everything solved: ghost the gate */ ghostAt(S.zone===0?614:(S.zone===1?916:560), 430, 40); }
+  snd.click();
+  /* after 90s in a zone, offer auto-solve */
+  if(Date.now() - S.zoneEnter > 90000) $('solveBtn').classList.remove('hiddenEl');
+});
+function ghostAt(x,y,r){
+  var c = document.createElementNS('http://www.w3.org/2000/svg','circle');
+  c.setAttribute('cx',x); c.setAttribute('cy',y); c.setAttribute('r',r);
+  c.setAttribute('class','ghost');
+  $('ghosts').appendChild(c);
+  setTimeout(function(){ if(c.parentNode) c.parentNode.removeChild(c); }, 4200);
+}
+$('solveBtn').addEventListener('click', function(){
+  var pid = Object.keys(PUZZLES).find(function(k){ return PUZZLES[k].zone === S.zone && S.solved.indexOf(k) < 0; });
+  if(pid) autoSolve(pid, false);
+});
+
+/* ---------- auto-solve (also used to restore saves) ---------- */
+function autoSolve(pid, silent){
+  var P = PUZZLES[pid];
+  if(P.sprout){
+    P.pieces.forEach(function(id){
+      if(S.sprouted.indexOf(id) < 0){ S.sprouted.push(id); }
+      el(id).classList.remove('hiddenEl');
+      var st = el('stub_'+id); if(st) st.style.fill = 'var(--ink)';
+    });
+  }
+  if(P.discs){
+    ['d1','d2','d3'].forEach(function(k){ DISCS[k].cur = DISCS[k].goal; rotDisc(k); });
+    checkPuzzle('p5', silent);
+    return;
+  }
+  P.pieces.forEach(function(id){ placePiece(id, silent); });
+}
+
+/* ---------- finale ---------- */
+function showFinale(){
+  var mins = Math.max(1, Math.round((Date.now() - S.start)/60000));
+  $('finTime').textContent = 'сон длился ~' + mins + ' мин';
+  $('finale').classList.remove('hiddenEl');
+}
+$('againBtn').addEventListener('click', function(){
+  try { localStorage.removeItem('inkdream'); } catch(e){}
+  location.reload();
+});
+
+/* ---------- intro / restore ---------- */
+var sv = loadSave();
+if(sv && sv.solved && sv.solved.length){ $('contBtn').classList.remove('hiddenEl'); }
+$('startBtn').addEventListener('click', function(){
+  try { localStorage.removeItem('inkdream'); } catch(e){}
+  audio(); $('intro').classList.add('hiddenEl');
+  S.start = Date.now(); gotoZone(0); save();
+});
+$('contBtn').addEventListener('click', function(){
+  audio(); $('intro').classList.add('hiddenEl');
+  S.start = sv.start || Date.now();
+  sv.solved.forEach(function(pid){ if(PUZZLES[pid]) autoSolve(pid, true); });
+  S.gates = sv.gates || [false,false,false];
+  [0,1,2].forEach(function(z){ if(S.gates[z]) el('gate'+z).classList.add('open'); });
+  gotoZone(Math.min(sv.zone||0, 2));
+});
+gotoZone(0);
+})();
+</script>
+</body>
+</html>
