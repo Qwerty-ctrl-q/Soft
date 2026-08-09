@@ -78,6 +78,9 @@ button{font-family:'PS2P',monospace;cursor:pointer}
 .trait-head{color:#7d6a35;border-bottom:2px solid #3a2e0d;margin-bottom:4px}
 .trait span:nth-child(2),.trait span:nth-child(3),.trait-head span:nth-child(2),.trait-head span:nth-child(3){text-align:right}
 .trait .b{color:#fff}.trait .boost{color:var(--gold)}
+.race-row{font-size:8px;color:#8d7a3f;margin:-6px 0 8px;letter-spacing:1px;text-transform:uppercase}
+.perk-box{display:flex;gap:10px;align-items:flex-start;font-size:8px;color:var(--ink-dim);line-height:1.8}
+.perk-box .pstar{color:var(--gold-hi);font-size:13px;flex:none}
 .weap-box{display:flex;gap:12px;align-items:center}
 .weap-box .wicon{width:56px;height:56px;background:#171204;border:2px solid var(--gold-dim);border-radius:6px;display:flex;align-items:center;justify-content:center;flex:none}
 .weap-box .wname{color:#fff;font-size:12px;margin-bottom:6px}
@@ -220,6 +223,7 @@ button{font-family:'PS2P',monospace;cursor:pointer}
   <div class="char-info">
     <div class="info-box">
       <div class="name-row"><span class="name" id="ci-name">Purple</span><span class="cost">[-2 Energy]</span></div>
+      <div class="race-row" id="ci-race">Mate</div>
       <div class="trait-head"><span>Trait</span><span>Base</span><span>Boost</span></div>
       <div class="trait"><span>&#10084; Health</span><span class="b" id="ci-hp">24</span><span class="boost">0.00</span></div>
       <div class="trait"><span>&#9930; Armor</span><span class="b" id="ci-ar">2</span><span class="boost">0.00</span></div>
@@ -230,6 +234,7 @@ button{font-family:'PS2P',monospace;cursor:pointer}
       <div class="wicon" id="ci-wicon"></div>
       <div><div class="wname" id="ci-wname">Sword</div><div class="wdesc" id="ci-wdesc"></div></div>
     </div>
+    <div class="info-box perk-box"><span class="pstar">&#9733;</span><span id="ci-perk"></span></div>
   </div>
   <div class="runbar">
     <div class="energy">Energy Left:<br><b id="energy-num">999/999</b></div>
@@ -554,6 +559,114 @@ const BOMB=[
 '.OBBBBO',
 '..OOO..'];
 const bombS=s=>makeSprite(BOMB,{O,B:'#2e3238',W:'#8b939c',F:'#ff8c1a'},s);
+const BAT_F1=[
+'OO.......OO',
+'OWWO...OWWO',
+'OWWWOBOWWWO',
+'.OWWBBBWWO.',
+'..OBEBEBO..',
+'...OBBBO...',
+'....OBO....',
+'.....O.....'];
+const BAT_F2=[
+'...........',
+'...O...O...',
+'.OOWOBOWOO.',
+'OWWWBBBWWWO',
+'.OWWBBBWWO.',
+'..OBEBEBO..',
+'...OBBBO...',
+'....OO.....'];
+const batMobS=(fr,sc=4)=>makeSprite(fr?BAT_F2:BAT_F1,{O,W:'#8a7ba8',B:'#5d4a7a',E:'#ffd83d'},sc);
+const SLIME_F1=[
+'..........',
+'...OOOO...',
+'..OGGGGO..',
+'.OGWGGGGO.',
+'OGGEGGEGGO',
+'OGGGGGGGGO',
+'.OGGGGGGO.',
+'..OOOOOO..'];
+const SLIME_F2=[
+'..........',
+'..........',
+'..OOOOOO..',
+'.OGWGGGGO.',
+'OGGEGGEGGO',
+'OGGGGGGGGO',
+'OGGGGGGGGO',
+'.OOOOOOOO.'];
+const slimeMobS=(fr,sc=4)=>makeSprite(fr?SLIME_F2:SLIME_F1,{O,G:'#7ad83a',W:'#c8f4a8',E:'#1c1b17'},sc);
+const SPIDER_F1=[
+'O.O.....O.O',
+'.O.O...O.O.',
+'..OOBBBOO..',
+'.OBBBBBBBO.',
+'OOBEEBEEBOO',
+'.OBBBBBBBO.',
+'..O.OBO.O..',
+'.O...O...O.'];
+const SPIDER_F2=[
+'.O.O...O.O.',
+'O.O.....O.O',
+'..OOBBBOO..',
+'.OBBBBBBBO.',
+'OOBEEBEEBOO',
+'.OBBBBBBBO.',
+'.O..OBO..O.',
+'..O..O..O..'];
+const spiderMobS=(fr,sc=4)=>makeSprite(fr?SPIDER_F2:SPIDER_F1,{O,B:'#3d2f4e',E:'#ff4b2e'},sc);
+const GHOST_F1=[
+'..OOOOOO..',
+'.OWWWWWWO.',
+'OWWEWWEWWO',
+'OWWWWWWWWO',
+'OWWMMWWWWO',
+'OWWWWWWWWO',
+'OWWWWWWWWO',
+'OWOWWOWWOO',
+'OO.OO.OO.O',
+'..........'];
+const GHOST_F2=[
+'..OOOOOO..',
+'.OWWWWWWO.',
+'OWWEWWEWWO',
+'OWWWWWWWWO',
+'OWWMMWWWWO',
+'OWWWWWWWWO',
+'OWWWWWWWWO',
+'OOWWOWWOWO',
+'O.OO.OO.OO',
+'..........'];
+const ghostMobS=(fr,sc=4)=>makeSprite(fr?GHOST_F2:GHOST_F1,{O:'#8a86a4',W:'#e8e4f4',E:'#2a2440',M:'#2a2440'},sc);
+const SKEL_F1=[
+'..OOOOOO..',
+'.OWWWWWWO.',
+'.OWEWWEWO.',
+'.OWWWWWWO.',
+'.OWMMMMWO.',
+'..OOOOOO..',
+'.OWOWWOWO.',
+'.OWWWWWWO.',
+'..OWWWWO..',
+'.OWO..OWO.',
+'.OWO..OWO.',
+'..O....O..'];
+const skelMobS=(fr,sc=4)=>makeSprite(SKEL_F1,{O,W:'#e8e4d4',E:'#1c1b17',M:'#1c1b17'},sc);
+const BRUTE_F1=[
+'..OOOOOOOOO..',
+'.OBBBBBBBBBO.',
+'OBBEEBBBEEBBO',
+'OBBEPBBBEPBBO',
+'OBBBBBBBBBBBO',
+'OBBMMMMMMMBBO',
+'OBBBBBBBBBBBO',
+'ODDDDDDDDDDDO',
+'ODDDDDDDDDDDO',
+'.ODDDDDDDDDO.',
+'.ODDO...ODDO.',
+'..OO.....OO..'];
+const bruteMobS=(fr,sc=4)=>makeSprite(BRUTE_F1,{O,B:'#8a6d55',D:'#6b5544',E:'#ffffff',P:'#1c1b17',M:'#3d2a1a'},sc);
 const LASERGUN=[
 '........OO',
 'OOOOOOOOFO',
@@ -618,12 +731,38 @@ const MODES={
   cursed:{name:'Cursed',dur:600,pace:1.0,winBonus:1500,statsRate:0.8,hpMul:1.1,cursed:true},
 };
 const CHARS=[
-  {id:'purple',name:'Purple',hp:24,armor:2,speed:1.1,luck:1.2,weapon:'sword',body:'#a45cd8',shade:'#7d3fae',band:'#38bdf8'},
-  {id:'blue',name:'Blue',hp:30,armor:1,speed:1.0,luck:1.0,weapon:'knife',body:'#5aa2e8',shade:'#3f7cba',band:'#e5352b'},
-  {id:'white',name:'White',hp:20,armor:0,speed:1.25,luck:1.5,weapon:'shuriken',body:'#e8e8e8',shade:'#b9bec4',band:'#38bdf8'},
-  {id:'black',name:'Black',hp:26,armor:3,speed:1.0,luck:0.8,weapon:'machete',body:'#6b7078',shade:'#4a4e55',band:'#e8b419'},
+  {id:'purple',name:'Purple',race:'Mate',hp:24,armor:2,speed:1.1,luck:1.2,weapon:'sword',
+   perk:'Versatile: +2 rerolls, +10% XP',mods:p=>{p.xpMul=1.1;p.rerollBonus=2},
+   body:'#a45cd8',shade:'#7d3fae',band:'#38bdf8'},
+  {id:'blue',name:'Blue',race:'Mate',hp:30,armor:1,speed:1.0,luck:1.0,weapon:'knife',
+   perk:'Tough: regenerates 0.5 HP/s',mods:p=>{p.regen=0.5},
+   body:'#5aa2e8',shade:'#3f7cba',band:'#e5352b'},
+  {id:'white',name:'White',race:'Ninja',hp:20,armor:0,speed:1.25,luck:1.5,weapon:'shuriken',
+   perk:'Shadow: dash cooldown -40%',mods:p=>{p.dashCdMul=0.6},
+   body:'#e8e8e8',shade:'#b9bec4',band:'#38bdf8'},
+  {id:'black',name:'Black',race:'Mate',hp:26,armor:3,speed:1.0,luck:0.8,weapon:'machete',
+   perk:'Warrior: +15% damage',mods:p=>{p.dmgMul+=0.15},
+   body:'#6b7078',shade:'#4a4e55',band:'#e8b419'},
+  {id:'robo',name:'Robo',race:'Robot',hp:28,armor:4,speed:0.95,luck:0.7,weapon:'laser',
+   perk:'Overclock: cooldowns -10%',mods:p=>{p.cdMul*=0.9},
+   body:'#9aa3ad',shade:'#6b7078',band:'#3ac2ff'},
+  {id:'ghosty',name:'Ghosty',race:'Ghost',hp:18,armor:0,speed:1.2,luck:1.1,weapon:'orbital',
+   perk:'Phasing: long i-frames, +speed when hit',mods:p=>{p.iframeDur=1.3;p.hitBoost=true},
+   body:'#e8e4f4',shade:'#b9b4d4',band:'#8a7ba8'},
+  {id:'imp',name:'Imp',race:'Demon',hp:22,armor:1,speed:1.15,luck:1.0,weapon:'molotov',
+   perk:'Pyromaniac: fire +50%, blasts +20%',mods:p=>{p.fireMul=1.5;p.explodeMul=1.2},
+   body:'#e5352b',shade:'#a82018',band:'#1c1b17'},
+  {id:'zorg',name:'Zorg',race:'Alien',hp:24,armor:2,speed:1.05,luck:1.0,weapon:'drone',
+   perk:'Hivemind: +1 projectile to all throws',mods:p=>{p.amountAdd+=1},
+   body:'#3ecf5a',shade:'#2a9a40',band:'#b45cff'},
+  {id:'bones',name:'Bones',race:'Skeleton',hp:20,armor:2,speed:1.1,luck:0.9,weapon:'bat',
+   perk:'Undead: survives death once per run',mods:p=>{p.undying=true},
+   body:'#e8e4d4',shade:'#b9b4a4',band:'#4a4e55'},
+  {id:'frosty',name:'Frosty',race:'Golem',hp:34,armor:3,speed:0.85,luck:0.9,weapon:'frost',
+   perk:'Permafrost: aura slows much harder',mods:p=>{p.frostBonus=0.15},
+   body:'#7cd0d8',shade:'#4a9aa8',band:'#ffffff'},
 ];
-const LOCKED_COUNT=13;
+const LOCKED_COUNT=6;
 
 const WEAPONS={
   knife:{name:'Knife',icon:knifeS,desc:'Thrown at the nearest monster',
@@ -699,7 +838,8 @@ const WEAPONS={
           {t:'+1 orb\nOrbit: +15%',f:w=>{w.count++;w.radius*=1.15}},
           {t:'Damage: +60%\nSpin: +25%',f:w=>{w.dmg*=1.6;w.spin*=1.25}}]},
 };
-const WEAPON_MAX_LV=8;
+const WEAPON_MAX_LV=16;
+const EVO_LV=8;
 const GENERIC_WLVL={t:'Damage: +25%\nCooldown: -5%',f:w=>{w.dmg*=1.25;w.cd*=0.95}};
 /* weapon + paired passive → evolution (via chest from elite/boss) */
 const EVO={
@@ -729,8 +869,8 @@ const PASSIVES={
   critup:{name:'Crit Chance+',glyph:'&#10038;',desc:'Critical hit chance:\n+5%',apply:p=>p.critCh+=0.05},
   critdmgup:{name:'Crit Damage+',glyph:'&#10039;',desc:'Critical hit damage:\n+25%',apply:p=>p.critDm+=0.25},
 };
-const PASSIVE_MAX={amountup:2,critup:5,critdmgup:4,areaup:5};
-const passiveMax=id=>PASSIVE_MAX[id]||5;
+const PASSIVE_MAX={amountup:4,critup:10,critdmgup:8,areaup:10};
+const passiveMax=id=>PASSIVE_MAX[id]||10;
 
 /* ---------- persistent ---------- */
 const store={
@@ -836,6 +976,10 @@ const SP={
   shuriken:shurikenS(3),grenade:grenadeS(3),bazooka:bazookaS(3),molotov:molotovS(3),rocket:rocketS(3),
   laser:laserS(3),drone:droneS(3),frost:frostS(3),orbital:orbitalS(3),
   potion:potionS(4),magnet:magnetS(4),bomb:bombS(4),chest:chestS(5),
+  bats:[batMobS(0),batMobS(1)],slimes:[slimeMobS(0),slimeMobS(1)],
+  spiders:[spiderMobS(0),spiderMobS(1)],ghosts:[ghostMobS(0),ghostMobS(1)],
+  skels:[skelMobS(0),skelMobS(1)],brutes:[bruteMobS(0),bruteMobS(1)],
+  crabKing:crabSprite(0,'#c0392b',9),wizardKing:wizardSprite(8),
 };
 const CHAR_SPRITES={};
 CHARS.forEach(c=>{CHAR_SPRITES[c.id]=[mateSprite(c.body,c.shade,c.band),mateSprite(c.shade,c.body,c.band)]});
@@ -881,7 +1025,7 @@ let cam={x:0,y:0},shake=0;
 let time=0,kills=0,totalDmg=0,fps=60,fpsAcc=0,fpsN=0;
 let monsters=[],projectiles=[],gems=[],pools=[],pickups=[],particles=[],floats=[],orbs=[];
 let spawnT=0,eliteT=0,bossSpawned=[],levelQueue=0,rerolls=2;
-let hordeNext=120,hordeEnd=0,hordeDir=0,hordeSpawnT=0;
+let hordeNext=120,hordeEnd=0,hordeDir=0,hordeSpawnT=0,midT=0;
 let dashWish=false;
 let player=null;
 
@@ -896,12 +1040,14 @@ function newPlayer(def){
     hp:0,
     dmgMul:1,spdMul:1,hpMul:1,armorAdd:0,magMul:1,cdMul:1,luckAdd:0,
     areaMul:1,amountAdd:0,critCh:0.05,critDm:1.5,
-    dashCd:0,dashT:0,
+    dashCd:0,dashT:0,dashCdMul:1,
+    xpMul:1,rerollBonus:0,regen:0,iframeDur:0.7,hitBoost:false,boostT:0,
+    fireMul:1,explodeMul:1,undying:false,frostBonus:0,
     weapons:{},passives:{},
     lv:1,xp:0,iframe:0,face:1,anim:0,moving:false,
     maxHp(){return Math.round(this.baseHp*this.hpMul)},
     armor(){return this.baseArmor+this.armorAdd},
-    speed(){return 150*this.baseSpeed*this.spdMul},
+    speed(){return 150*this.baseSpeed*this.spdMul*(this.boostT>0?1.3:1)},
     luck(){return this.baseLuck+this.luckAdd},
     magnetR(){return 70*this.magMul},
   };
@@ -930,7 +1076,7 @@ function evolveWeapon(id){
 function evoCandidate(){
   for(const id in player.weapons){
     const w=player.weapons[id];
-    if(!w.evolved&&w.lv>=WEAPON_MAX_LV&&EVO[id]&&player.passives[EVO[id].pair])return id}
+    if(!w.evolved&&w.lv>=EVO_LV&&EVO[id]&&player.passives[EVO[id].pair])return id}
   return null}
 function addPassive(id){
   player.passives[id]={id,lv:1};PASSIVES[id].apply(player);renderSlots()}
@@ -939,11 +1085,26 @@ function upgradePassive(id){
 
 /* ---------- entities ---------- */
 const MTYPES={
-  alien:{sprites:'aliens',hp:10,speed:46,dmg:3,xp:1,r:20},
-  crab:{sprites:'crabsO',hp:7,speed:72,dmg:4,xp:1,r:19},
-  redcrab:{sprites:'crabsR',hp:26,speed:56,dmg:6,xp:2,r:21},
-  purplecrab:{sprites:'crabsP',hp:40,speed:64,dmg:7,xp:3,r:21},
+  alien:{sk:'aliens',hp:10,speed:46,dmg:3,xp:1,r:20},
+  crab:{sk:'crabsO',hp:7,speed:72,dmg:4,xp:1,r:19},
+  redcrab:{sk:'crabsR',hp:26,speed:56,dmg:6,xp:2,r:21},
+  purplecrab:{sk:'crabsP',hp:40,speed:64,dmg:7,xp:3,r:21},
+  bat:{sk:'bats',hp:6,speed:98,dmg:3,xp:1,r:16,wob:true},
+  slime:{sk:'slimes',hp:24,speed:34,dmg:4,xp:2,r:20,split:true},
+  slimemini:{sk:'slimes',hp:6,speed:62,dmg:2,xp:1,r:12,mini:true},
+  spider:{sk:'spiders',hp:14,speed:66,dmg:5,xp:2,r:18,burst:true},
+  skeleton:{sk:'skels',hp:36,speed:40,dmg:7,xp:3,r:20},
+  ghost:{sk:'ghosts',hp:16,speed:52,dmg:5,xp:2,r:18,ghost:true},
+  brute:{sk:'brutes',hp:75,speed:29,dmg:12,xp:4,r:26},
 };
+function pickType(t){
+  const r=Math.random();
+  if(t<25)return r<0.7?'crab':'alien';
+  if(t<90)return r<0.45?'crab':r<0.8?'alien':'bat';
+  if(t<180)return r<0.3?'alien':r<0.55?'crab':r<0.7?'bat':r<0.85?'slime':'redcrab';
+  if(t<300)return r<0.2?'crab':r<0.35?'bat':r<0.5?'slime':r<0.65?'redcrab':r<0.82?'spider':'skeleton';
+  return r<0.14?'bat':r<0.28?'slime':r<0.42?'redcrab':r<0.56?'spider':r<0.7?'skeleton':r<0.82?'ghost':r<0.93?'brute':'purplecrab';
+}
 function spawnMonster(type,elite=false){
   const t=MTYPES[type];
   const a=Math.random()*Math.PI*2,R=Math.hypot(W,H)/2+60;
@@ -954,15 +1115,33 @@ function spawnMonster(type,elite=false){
     speed:t.speed*mode.pace*(elite?0.85:1)*rnd(0.9,1.1),
     dmg:t.dmg*(elite?2:1),xp:t.xp*(elite?5:1),
     r:t.r*(elite?1.5:1),elite,scale:elite?1.5:1,
+    split:!!t.split,burst:!!t.burst,ghost:!!t.ghost,wob:!!t.wob,
     anim:Math.random()*10,hitT:0,kx:0,ky:0,boss:false});
 }
-function spawnBoss(final){
+function spawnMidboss(){
+  const type=pickType(time);const t=MTYPES[type];
+  const a=Math.random()*Math.PI*2,R=Math.hypot(W,H)/2+70;
+  const hp=t.hp*(1+time/110)*mode.hpMul*24;
+  monsters.push({type,x:cam.x+Math.cos(a)*R,y:cam.y+Math.sin(a)*R,
+    hp,maxHp:hp,speed:t.speed*mode.pace*0.75,dmg:t.dmg*1.8,xp:0,
+    r:t.r*2,elite:true,mid:true,scale:2.2,
+    split:false,burst:!!t.burst,ghost:!!t.ghost,wob:!!t.wob,
+    anim:0,hitT:0,kx:0,ky:0,boss:false});
+  addFloat(cam.x,cam.y-110,'MINI-BOSS!','#ffd83d',1.4);SFX.boom()}
+const BOSS_KINDS={
+  crabking:{hp:380,speed:52,dmg:9,name:'CRAB KING!'},
+  wizardking:{hp:560,speed:38,dmg:9,name:'WIZARD KING!',caster:true},
+  demon:{hp:950,speed:42,dmg:11,name:'FINAL BOSS!'},
+};
+function spawnBoss(kind,final){
+  const bk=BOSS_KINDS[kind];
   const a=Math.random()*Math.PI*2,R=Math.hypot(W,H)/2+80;
-  const hp=(final?900:420)*mode.hpMul*(1+time/300);
-  monsters.push({type:'boss',x:cam.x+Math.cos(a)*R,y:cam.y+Math.sin(a)*R,
-    hp,maxHp:hp,speed:40*mode.pace,dmg:10,xp:0,r:36,elite:true,boss:true,final,
+  const hp=bk.hp*mode.hpMul*(1+time/300);
+  monsters.push({type:'boss',kind,x:cam.x+Math.cos(a)*R,y:cam.y+Math.sin(a)*R,
+    hp,maxHp:hp,speed:bk.speed*mode.pace,dmg:bk.dmg,xp:0,r:36,elite:true,boss:true,final,
+    caster:!!bk.caster,castT:3,
     scale:2,anim:0,hitT:0,kx:0,ky:0});
-  addFloat(cam.x,cam.y-120,final?'FINAL BOSS!':'BOSS!','#ff4b2e',1.6);
+  addFloat(cam.x,cam.y-120,bk.name,'#ff4b2e',1.6);
   SFX.boom()}
 function spawnWizard(){
   const a=Math.random()*Math.PI*2,R=Math.hypot(W,H)/2+60;
@@ -1129,7 +1308,7 @@ function fireWeapons(dt){
           projectiles.push({x:player.x,y:player.y,lob:true,t:0,dur:0.75,
             sx:player.x,sy:player.y,tx:tgt.x,ty:tgt.y,sprite:SP.molotov,rot:0,spin:8,
             onLand:(px,py)=>{
-              pools.push({x:px,y:py,r:w.radius*player.areaMul,dps:w.dmg*player.dmgMul,life:w.life,tick:0});
+              pools.push({x:px,y:py,r:w.radius*player.areaMul,dps:w.dmg*player.dmgMul*player.fireMul,life:w.life,tick:0});
               noise(0.25,0.2)}})
         },i*240);
       }
@@ -1171,13 +1350,24 @@ function killMonster(m){
     pickups.push({x:m.x,y:m.y,kind:evoCandidate()?'chest':'potion',t:0});
     addBoomFx(m.x,m.y,80);SFX.boom();
     if(m.final)winRun();
+  }else if(m.mid){
+    for(let i=0;i<6;i++)dropGem(m.x+rnd(-36,36),m.y+rnd(-36,36),5);
+    pickups.push({x:m.x,y:m.y,kind:evoCandidate()?'chest':pick(['potion','magnet','bomb']),t:0});
+    pickups.push({x:m.x+rnd(-30,30),y:m.y+rnd(-30,30),kind:pick(['potion','magnet','bomb']),t:0});
+    addBoomFx(m.x,m.y,60);
   }else{
     dropGem(m.x,m.y,m.elite?5:m.xp>=2?2:1);
     if(m.elite)pickups.push({x:m.x+rnd(-20,20),y:m.y,kind:evoCandidate()?'chest':pick(['potion','magnet','bomb']),t:0});
     else maybeDrop(m.x,m.y);
+    if(m.split&&!m.mini){
+      const t=MTYPES.slimemini,hpS=t.hp*(1+time/110)*mode.hpMul;
+      for(let i=0;i<2;i++)monsters.push({type:'slimemini',x:m.x+rnd(-18,18),y:m.y+rnd(-18,18),
+        hp:hpS,maxHp:hpS,speed:t.speed*mode.pace,dmg:t.dmg,xp:t.xp,r:t.r,
+        elite:false,scale:0.65,mini:true,anim:Math.random()*10,hitT:0,kx:0,ky:0,boss:false})}
   }
 }
 function explode(x,y,r,dmg){
+  dmg*=player.explodeMul;
   addBoomFx(x,y,r);SFX.boom();
   for(const m of monsters){
     if(dist2(m.x,m.y,x,y)<r*r)hitMonster(m,dmg*rnd(0.9,1.1),120,m.x-x,m.y-y)}
@@ -1185,10 +1375,15 @@ function explode(x,y,r,dmg){
 function hurtPlayer(dmg){
   if(player.iframe>0)return;
   const real=Math.max(1,Math.round(dmg-player.armor()));
-  player.hp-=real;player.iframe=0.7;shake=Math.min(shake+4,10);
+  player.hp-=real;player.iframe=player.iframeDur;shake=Math.min(shake+4,10);
+  if(player.hitBoost)player.boostT=2;
   SFX.hurt();
   addFloat(player.x,player.y-40,'-'+real,'#ff5a5a',1.2);
-  if(player.hp<=0){player.hp=0;endRun(false)}
+  if(player.hp<=0){
+    if(player.undying){player.undying=false;
+      player.hp=Math.round(player.maxHp()*0.5);player.iframe=1.6;
+      addFloat(player.x,player.y-56,'UNDEAD!','#2ee6a8',1.6);SFX.lvl();return}
+    player.hp=0;endRun(false)}
 }
 
 /* ---------- items ---------- */
@@ -1223,9 +1418,15 @@ function buildOptions(){
   return opts.slice(0,Math.min(n,opts.length))}
 let currentOpts=[];
 function showLevelUp(){
+  currentOpts=buildOptions();
+  if(!currentOpts.length){
+    levelQueue=0;
+    player.hp=Math.min(player.maxHp(),player.hp+Math.round(player.maxHp()*0.2));
+    addFloat(player.x,player.y-52,'MAX BUILD! +HP','#2ee6a8',1.3);
+    if(state==='levelup'){$('#screen-levelup').classList.remove('show')}
+    state='run';return}
   state='levelup';
   $('#screen-levelup').classList.add('show');
-  currentOpts=buildOptions();
   renderCards()}
 function renderCards(){
   const box=$('#lu-cards');box.innerHTML='';
@@ -1294,10 +1495,11 @@ function startRun(){
   energy=Math.max(0,energy-2);store.set('energy',energy);
   mode=MODES[modeKey];
   player=newPlayer(charDef);
+  if(charDef.mods)charDef.mods(player);
   player.hp=player.maxHp();
   monsters=[];projectiles=[];gems=[];pools=[];pickups=[];particles=[];floats=[];orbs=[];
-  time=0;kills=0;totalDmg=0;spawnT=0;eliteT=0;bossSpawned=[];levelQueue=0;rerolls=2+(charDef.luck>=1.2?1:0);
-  hordeNext=120;hordeEnd=0;hordeSpawnT=0;dashWish=false;
+  time=0;kills=0;totalDmg=0;spawnT=0;eliteT=0;bossSpawned=[];levelQueue=0;rerolls=2+(charDef.luck>=1.2?1:0)+player.rerollBonus;
+  hordeNext=120;hordeEnd=0;hordeSpawnT=0;dashWish=false;midT=0;
   $('#hud-timer').classList.remove('horde');
   inventory={potion:1,magnet:0,bomb:0};
   player.x=0;player.y=0;cam.x=0;cam.y=0;
@@ -1395,6 +1597,8 @@ function buildCharScreen(){
   fillCharInfo()}
 function fillCharInfo(){
   $('#ci-name').textContent=charDef.name;
+  $('#ci-race').textContent=charDef.race;
+  $('#ci-perk').textContent=charDef.perk;
   $('#ci-hp').textContent=charDef.hp;
   $('#ci-ar').textContent=charDef.armor;
   $('#ci-sp').textContent=charDef.speed;
@@ -1452,14 +1656,15 @@ function update(dt){
   player.dashCd-=dt;
   if(dashWish){dashWish=false;
     if(player.dashCd<=0){
-      player.dashCd=2.2;player.dashT=0.16;
+      player.dashCd=2.2*player.dashCdMul;player.dashT=0.16;
       player.dashDx=im>0.1?ix:player.face;player.dashDy=im>0.1?iy:0;
       player.iframe=Math.max(player.iframe,0.34);
       blip(500,0.1,'square',0.1,-260)}}
   if(player.dashT>0){player.dashT-=dt;
     player.x+=player.dashDx*640*dt;player.y+=player.dashDy*640*dt;
     particles.push({x:player.x,y:player.y,t:0,life:0.25,kind:'trail'})}
-  player.iframe-=dt;
+  player.iframe-=dt;player.boostT-=dt;
+  if(player.regen)player.hp=Math.min(player.maxHp(),player.hp+player.regen*dt);
   cam.x+=(player.x-cam.x)*Math.min(1,dt*6);
   cam.y+=(player.y-cam.y)*Math.min(1,dt*6);
   /* spawns */
@@ -1468,14 +1673,7 @@ function update(dt){
   if(spawnT<=0&&monsters.length<240){
     spawnT=interval;
     const batch=1+Math.floor(time/50);
-    for(let i=0;i<batch;i++){
-      const roll=Math.random();
-      let type='crab';
-      if(time<25)type=roll<0.75?'crab':'alien';
-      else if(time<90)type=roll<0.5?'alien':'crab';
-      else if(time<210)type=roll<0.42?'alien':roll<0.8?'crab':'redcrab';
-      else type=roll<0.3?'alien':roll<0.6?'crab':roll<0.85?'redcrab':'purplecrab';
-      spawnMonster(type)}
+    for(let i=0;i<batch;i++)spawnMonster(pickType(time));
     if(mode.cursed&&time>45&&Math.random()<0.12)spawnWizard()}
   /* horde events */
   if(time>=hordeNext){hordeNext+=120;hordeEnd=time+8;hordeDir=Math.random()*Math.PI*2;hordeSpawnT=0;
@@ -1496,10 +1694,12 @@ function update(dt){
     }else{hordeEnd=0;$('#hud-timer').classList.remove('horde')}}
   eliteT+=dt;
   if(eliteT>=60){eliteT=0;spawnMonster(time>200?'purplecrab':'redcrab',true)}
-  /* bosses: mid-run and near end */
-  const bossTimes=[mode.dur*0.5,mode.dur-40];
-  bossTimes.forEach((bt,i)=>{
-    if(time>=bt&&!bossSpawned[i]){bossSpawned[i]=true;spawnBoss(i===1)}});
+  /* bosses: three across the run + midbosses */
+  const bossSched=[[mode.dur*0.33,'crabking',false],[mode.dur*0.66,'wizardking',false],[mode.dur-40,'demon',true]];
+  bossSched.forEach(([bt,kind,fin],i)=>{
+    if(time>=bt&&!bossSpawned[i]){bossSpawned[i]=true;spawnBoss(kind,fin)}});
+  midT+=dt;
+  if(midT>=150){midT=0;spawnMidboss()}
   /* monsters */
   const cell=44,gridMap=new Map();
   for(let i=0;i<monsters.length;i++){
@@ -1521,15 +1721,23 @@ function update(dt){
       if(m.castT<=0){m.castT=rnd(2.2,3.4);
         orbs.push({x:m.x,y:m.y,vx:Math.cos(a)*110,vy:Math.sin(a)*110,life:5})}
     }else{
-      const a=Math.atan2(player.y-m.y,player.x-m.x);
+      let a=Math.atan2(player.y-m.y,player.x-m.x);
+      if(m.wob){m.wobT=(m.wobT||0)+dt;a+=Math.sin(m.wobT*5)*0.55}
+      let bs=1;
+      if(m.burst){m.bt=(m.bt||0)+dt;bs=(m.bt%1.6)<0.9?2.0:0.12}
+      if(m.caster){m.castT-=dt;
+        if(m.castT<=0){m.castT=3.5;
+          for(let ob=0;ob<8;ob++){const oa=Math.PI*2*ob/8;
+            orbs.push({x:m.x,y:m.y,vx:Math.cos(oa)*130,vy:Math.sin(oa)*130,life:4})}}}
       let sl=1;
       const fw=player.weapons.frost;
-      if(fw&&dist2(m.x,m.y,player.x,player.y)<(fw.radius*player.areaMul)*(fw.radius*player.areaMul))sl=fw.slow;
-      m.x+=Math.cos(a)*m.speed*sl*dt+m.kx*dt*6;
-      m.y+=Math.sin(a)*m.speed*sl*dt+m.ky*dt*6;
+      if(fw&&dist2(m.x,m.y,player.x,player.y)<(fw.radius*player.areaMul)*(fw.radius*player.areaMul))sl=Math.max(0.25,fw.slow-player.frostBonus);
+      m.x+=Math.cos(a)*m.speed*sl*bs*dt+m.kx*dt*6;
+      m.y+=Math.sin(a)*m.speed*sl*bs*dt+m.ky*dt*6;
     }
     m.kx*=Math.pow(0.02,dt);m.ky*=Math.pow(0.02,dt);
     /* separation with cell neighbors */
+    if(!m.ghost){
     const ck=((m.x/cell)|0),cky=((m.y/cell)|0);
     for(let ox=-1;ox<=1;ox++)for(let oy=-1;oy<=1;oy++){
       const lst=gridMap.get((ck+ox)+':'+(cky+oy));if(!lst)continue;
@@ -1537,6 +1745,7 @@ function update(dt){
         const d2=dist2(m.x,m.y,n.x,n.y),rr=(m.r+n.r)*0.7;
         if(d2<rr*rr&&d2>0.01){const d=Math.sqrt(d2),push=(rr-d)/d*0.5;
           m.x+=(m.x-n.x)*push*0.4;m.y+=(m.y-n.y)*push*0.4}}}
+    }
     /* touch player */
     const pr=m.r+16;
     if(dist2(m.x,m.y,player.x,player.y)<pr*pr)hurtPlayer(m.dmg);
@@ -1586,7 +1795,7 @@ function update(dt){
       g.x+=(player.x-g.x)/d*sp*dt;g.y+=(player.y-g.y)/d*sp*dt}
     if(d2p<22*22){
       gems.splice(i,1);SFX.gem();
-      player.xp+=g.val;
+      player.xp+=g.val*player.xpMul;
       while(player.xp>=xpNeed(player.lv)){
         player.xp-=xpNeed(player.lv);player.lv++;levelQueue++;SFX.lvl()}
       if(levelQueue>0&&state==='run')showLevelUp()}}
@@ -1671,16 +1880,17 @@ function draw(){
     if(d.player){drawPlayer(ox,oy);continue}
     const m=d;
     let sp;
-    if(m.boss)sp=SP.demonBig;
+    if(m.boss)sp=m.kind==='crabking'?SP.crabKing:m.kind==='wizardking'?SP.wizardKing:SP.demonBig;
     else if(m.wizard)sp=SP.wizard;
     else{const fr=(m.anim|0)%2;
-      sp=m.type==='alien'?SP.aliens[fr]:m.type==='crab'?SP.crabsO[fr]:m.type==='redcrab'?SP.crabsR[fr]:SP.crabsP[fr]}
+      sp=SP[MTYPES[m.type].sk][fr]}
     const w=sp.width*m.scale/(m.boss?1.75:1),h=sp.height*m.scale/(m.boss?1.75:1);
-    if(m.hitT>0){cx.globalAlpha=0.6}
+    if(m.hitT>0)cx.globalAlpha=0.6;
+    else if(m.ghost)cx.globalAlpha=0.75;
     cx.drawImage(sp,Math.round(m.x+ox-w/2),Math.round(m.y+oy-h/2),w,h);
     cx.globalAlpha=1;
     if(m.elite||m.boss){
-      const bw=m.boss?70:40;
+      const bw=m.boss?70:m.mid?56:40;
       cx.fillStyle='#000';cx.fillRect(m.x+ox-bw/2,m.y+oy-h/2-10,bw,5);
       cx.fillStyle=m.boss?'#ff4b2e':'#e8b419';
       cx.fillRect(m.x+ox-bw/2+1,m.y+oy-h/2-9,(bw-2)*clamp(m.hp/m.maxHp,0,1),3)}}

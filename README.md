@@ -7,15 +7,15 @@ A single-file HTML5 canvas survivors-like — a fan remake inspired by the gamep
 ## Features
 
 - 3 modes: **Normal** (10 min, 1000 pts win bonus), **Hard** (5 min, 120% pace, 4000 pts), **Cursed** (10 min, 80% stats, 1500 pts, wizard monsters)
-- 4 playable mates (Purple / Blue / White / Black) with Health, Armor, Speed and Luck traits and unique starting weapons
-- 12 auto-attacking weapons with 8 upgrade levels each: Knife, Machete, Sword, Bat, Shuriken, Grenade, Bazooka, Molotov, Laser, Drone, Frost Aura, Orbital
+- 10 playable heroes of different races (Mate, Ninja, Robot, Ghost, Demon, Alien, Skeleton, Golem), each with Health/Armor/Speed/Luck traits, a unique starting weapon and a unique perk (regeneration, undead second life, pyromania, fast dash, etc.)
+- 12 auto-attacking weapons with 16 upgrade levels each: Knife, Machete, Sword, Bat, Shuriken, Grenade, Bazooka, Molotov, Laser, Drone, Frost Aura, Orbital
 - 11 passives: Damage+, Speed+, Health+, Armor+, Magnet+, Cooldown+, Luck+, Area+, Amount+, Crit Chance+, Crit Damage+
 - Weapon evolutions: max a weapon (lv.8) while holding its paired passive, then grab the chest from an elite/boss (e.g. Sword -> Excalibur, Grenade -> Cluster Bomb)
 - Dash on Space (touch: DASH button) with i-frames and cooldown
 - Horde events every 2 minutes: the timer flashes red and a wall of fast monsters floods in
 - Crit system, elite auras, up to 6 weapon + 6 passive slots
 - Level-up card picker with reroll, XP gems, magnet radius
-- Monster waves that scale over time, elites every minute, mid-run boss and final boss
+- 11 monster types with distinct behaviors (splitting slimes, phasing ghosts, burst-moving spiders, wobbling bats, tanky brutes), elites every minute, mini-bosses every 2.5 minutes, and three distinct bosses per run: Crab King, orb-casting Wizard King and the final Demon
 - Consumables: potion, magnet, bomb (keys 1/2/3)
 - Chiptune music + SFX (WebAudio), pause, FPS/monster counters
 - Win/Game-over screen with points and local best-score records
