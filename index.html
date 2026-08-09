@@ -336,6 +336,157 @@ const MATE_ROWS=[
 function mateSprite(body,shade,band,scale=4){
   return makeSprite(MATE_ROWS,{O,B:body,D:shade,H:band,K:'#ffffff',E:'#f5f2e8',P:'#23201a',M:'#3f3a30'},scale);
 }
+/* race body shapes. O outline, B body, D shade, H accent, Y accent2, E eye, P pupil, M mouth, W white */
+const FORM_ROWS={
+mate:[
+'..OOOOOOOO..',
+'.OBBBBBBBBO.',
+'OHHHHHHHHHHO',
+'OHHHHHHHHHKO',
+'OBBBBBBBBBBO',
+'OBEEBBBBEEBO',
+'OBEPBBBBEPBO',
+'OBBBBBBBBBBO',
+'OBBBMMMMBBBO',
+'OBBBBBBBBBBO',
+'ODDDDDDDDDDO',
+'ODDDDDDDDDDO',
+'.ODDO..ODDO.',
+'..OO....OO..'],
+matetail:[
+'..OOOOOOOO..',
+'.OBBBBBBBBO.',
+'OHHHHHHHHHHO',
+'HHHHHHHHHHHO',
+'OHOBBBBBBBBO',
+'OBEEBBBBEEBO',
+'OBEPBBBBEPBO',
+'OBBBBBBBBBBO',
+'OBBBMMMMBBBO',
+'OBBBBBBBBBBO',
+'ODDDDDDDDDDO',
+'ODDDDDDDDDDO',
+'.ODDO..ODDO.',
+'..OO....OO..'],
+ninja:[
+'..OOOOOOOO..',
+'.OHHHHHHHHO.',
+'OHHHHHHHHHHO',
+'OHHHHHHHHHHO',
+'OHEEHHHHEEHO',
+'OHEPHHHHEPHO',
+'OHHHHHHHHHHO',
+'OBBBBBBBBBBO',
+'OBBBBBBBBBBO',
+'OBBBBBBBBBBO',
+'ODDDDDDDDDDO',
+'ODDDDDDDDDDO',
+'.ODDO..ODDO.',
+'..OO....OO..'],
+robot:[
+'.....OO.....',
+'....OYYO....',
+'.....OO.....',
+'..OOOOOOOO..',
+'.OBBBBBBBBO.',
+'.OBEEBBEEBO.',
+'.OBPPBBPPBO.',
+'.OBBBBBBBBO.',
+'.OBMWMWMWBO.',
+'.OOOOOOOOOO.',
+'.ODWDDDDWDO.',
+'.ODDDDDDDDO.',
+'..ODO..ODO..',
+'..OO....OO..'],
+ghost:[
+'..OOOOOOOO..',
+'.OBBBBBBBBO.',
+'OBBBBBBBBBBO',
+'OBEEBBBBEEBO',
+'OBEPBBBBEPBO',
+'OBBBBBBBBBBO',
+'OBBBMMMMBBBO',
+'OBBBBBBBBBBO',
+'OBBBBBBBBBBO',
+'OBBBBBBBBBBO',
+'OBBOBBOBBOBO',
+'OBBOBBOBBOBO',
+'.OO.OO.OO.O.',
+'............'],
+demon:[
+'.OY......YO.',
+'..OY....YO..',
+'..OOOOOOOO..',
+'.OBBBBBBBBO.',
+'OBBBBBBBBBBO',
+'OBEEBBBBEEBO',
+'OBEPBBBBEPBO',
+'OBBBBBBBBBBO',
+'OBMWMWMWMWBO',
+'OBBBBBBBBBBO',
+'ODDDDDDDDDDO',
+'ODDDDDDDDDDO',
+'.ODDO..ODDO.',
+'..OO....OO..'],
+alien:[
+'..O......O..',
+'.OYO....OYO.',
+'...O....O...',
+'..OOOOOOOO..',
+'.OBBBBBBBBO.',
+'OBBBOOOOBBBO',
+'OBBOEEEEOBBO',
+'OBBOEPPEOBBO',
+'OBBBOOOOBBBO',
+'OBBMMMMMMBBO',
+'ODDDDDDDDDDO',
+'ODDDDDDDDDDO',
+'.ODDO..ODDO.',
+'..OO....OO..'],
+skeleton:[
+'..OOOOOOOO..',
+'.OBBBBBBBBO.',
+'OBBBBBBBBBBO',
+'OBPPBBBBPPBO',
+'OBPPBBBBPPBO',
+'OBBBBPPBBBBO',
+'OBWBWBWBWBBO',
+'OBBBBBBBBBBO',
+'ODPDDPDDPDDO',
+'ODDDDDDDDDDO',
+'ODPDDPDDPDDO',
+'ODDDDDDDDDDO',
+'.ODDO..ODDO.',
+'..OO....OO..'],
+golem:[
+'.....OYO.....',
+'....OYYYO....',
+'..OOOOOOOOO..',
+'.OBBBBBBBBBO.',
+'OBBBBBBBBBBBO',
+'OBBEEBBBEEBBO',
+'OBBEPBBBEPBBO',
+'OBBBBBBBBBBBO',
+'OBBBMMMMMBBBO',
+'OBDBBBBBBDBBO',
+'ODDDDDDDDDDDO',
+'ODDDDDDDDDDDO',
+'.ODDO...ODDO.',
+'..OO.....OO..'],
+};
+/* auto frame 2: nudge the leg rows one pixel */
+function shiftRow(r){return r.length? r[r.length-1]+r.slice(0,-1):r}
+function formFrames(rows){
+  const f2=rows.slice(0,-2).concat(rows.slice(-2).map(shiftRow));
+  return [rows,f2]}
+const FORM_Y={robot:'#ffd83d',demon:'#2a1208',alien:null,golem:'#c8f4ff'};
+const FORM_P={skeleton:'#3a3630'};
+function charSprite(def,frame=0,scale=4){
+  const rows=formFrames(FORM_ROWS[def.form||'mate'])[frame];
+  return makeSprite(rows,{O,B:def.body,D:def.shade,H:def.band,K:'#ffffff',
+    Y:FORM_Y[def.form]===undefined?def.band:(FORM_Y[def.form]||def.band),
+    E:'#f5f2e8',P:FORM_P[def.form]||'#23201a',M:'#3f3a30',W:'#ffffff'},scale);
+}
 /* green one-eyed alien with helmet arc, 12x12, two frames */
 const ALIEN_F1=[
 '..O..OO..O..',
@@ -731,34 +882,34 @@ const MODES={
   cursed:{name:'Cursed',dur:600,pace:1.0,winBonus:1500,statsRate:0.8,hpMul:1.1,cursed:true},
 };
 const CHARS=[
-  {id:'purple',name:'Purple',race:'Mate',hp:24,armor:2,speed:1.1,luck:1.2,weapon:'sword',
+  {id:'purple',form:'matetail',name:'Purple',race:'Mate',hp:24,armor:2,speed:1.1,luck:1.2,weapon:'sword',
    perk:'Versatile: +2 rerolls, +10% XP',mods:p=>{p.xpMul=1.1;p.rerollBonus=2},
    body:'#a45cd8',shade:'#7d3fae',band:'#38bdf8'},
-  {id:'blue',name:'Blue',race:'Mate',hp:30,armor:1,speed:1.0,luck:1.0,weapon:'knife',
+  {id:'blue',form:'mate',name:'Blue',race:'Mate',hp:30,armor:1,speed:1.0,luck:1.0,weapon:'knife',
    perk:'Tough: regenerates 0.5 HP/s',mods:p=>{p.regen=0.5},
    body:'#5aa2e8',shade:'#3f7cba',band:'#e5352b'},
-  {id:'white',name:'White',race:'Ninja',hp:20,armor:0,speed:1.25,luck:1.5,weapon:'shuriken',
+  {id:'white',form:'ninja',name:'White',race:'Ninja',hp:20,armor:0,speed:1.25,luck:1.5,weapon:'shuriken',
    perk:'Shadow: dash cooldown -40%',mods:p=>{p.dashCdMul=0.6},
    body:'#e8e8e8',shade:'#b9bec4',band:'#38bdf8'},
-  {id:'black',name:'Black',race:'Mate',hp:26,armor:3,speed:1.0,luck:0.8,weapon:'machete',
+  {id:'black',form:'mate',name:'Black',race:'Mate',hp:26,armor:3,speed:1.0,luck:0.8,weapon:'machete',
    perk:'Warrior: +15% damage',mods:p=>{p.dmgMul+=0.15},
    body:'#6b7078',shade:'#4a4e55',band:'#e8b419'},
-  {id:'robo',name:'Robo',race:'Robot',hp:28,armor:4,speed:0.95,luck:0.7,weapon:'laser',
+  {id:'robo',form:'robot',name:'Robo',race:'Robot',hp:28,armor:4,speed:0.95,luck:0.7,weapon:'laser',
    perk:'Overclock: cooldowns -10%',mods:p=>{p.cdMul*=0.9},
    body:'#9aa3ad',shade:'#6b7078',band:'#3ac2ff'},
-  {id:'ghosty',name:'Ghosty',race:'Ghost',hp:18,armor:0,speed:1.2,luck:1.1,weapon:'orbital',
+  {id:'ghosty',form:'ghost',name:'Ghosty',race:'Ghost',hp:18,armor:0,speed:1.2,luck:1.1,weapon:'orbital',
    perk:'Phasing: long i-frames, +speed when hit',mods:p=>{p.iframeDur=1.3;p.hitBoost=true},
    body:'#e8e4f4',shade:'#b9b4d4',band:'#8a7ba8'},
-  {id:'imp',name:'Imp',race:'Demon',hp:22,armor:1,speed:1.15,luck:1.0,weapon:'molotov',
+  {id:'imp',form:'demon',name:'Imp',race:'Demon',hp:22,armor:1,speed:1.15,luck:1.0,weapon:'molotov',
    perk:'Pyromaniac: fire +50%, blasts +20%',mods:p=>{p.fireMul=1.5;p.explodeMul=1.2},
    body:'#e5352b',shade:'#a82018',band:'#1c1b17'},
-  {id:'zorg',name:'Zorg',race:'Alien',hp:24,armor:2,speed:1.05,luck:1.0,weapon:'drone',
+  {id:'zorg',form:'alien',name:'Zorg',race:'Alien',hp:24,armor:2,speed:1.05,luck:1.0,weapon:'drone',
    perk:'Hivemind: +1 projectile to all throws',mods:p=>{p.amountAdd+=1},
    body:'#3ecf5a',shade:'#2a9a40',band:'#b45cff'},
-  {id:'bones',name:'Bones',race:'Skeleton',hp:20,armor:2,speed:1.1,luck:0.9,weapon:'bat',
+  {id:'bones',form:'skeleton',name:'Bones',race:'Skeleton',hp:20,armor:2,speed:1.1,luck:0.9,weapon:'bat',
    perk:'Undead: survives death once per run',mods:p=>{p.undying=true},
    body:'#e8e4d4',shade:'#b9b4a4',band:'#4a4e55'},
-  {id:'frosty',name:'Frosty',race:'Golem',hp:34,armor:3,speed:0.85,luck:0.9,weapon:'frost',
+  {id:'frosty',form:'golem',name:'Frosty',race:'Golem',hp:34,armor:3,speed:0.85,luck:0.9,weapon:'frost',
    perk:'Permafrost: aura slows much harder',mods:p=>{p.frostBonus=0.15},
    body:'#7cd0d8',shade:'#4a9aa8',band:'#ffffff'},
 ];
@@ -982,7 +1133,7 @@ const SP={
   crabKing:crabSprite(0,'#c0392b',9),wizardKing:wizardSprite(8),
 };
 const CHAR_SPRITES={};
-CHARS.forEach(c=>{CHAR_SPRITES[c.id]=[mateSprite(c.body,c.shade,c.band),mateSprite(c.shade,c.body,c.band)]});
+CHARS.forEach(c=>{CHAR_SPRITES[c.id]=[charSprite(c,0),charSprite(c,1)]});
 const WEAPON_SPRITE={knife:'knife',machete:'machete',sword:'sword',bat:'bat',shuriken:'shuriken',grenade:'grenade',bazooka:'bazooka',molotov:'molotov'};
 
 /* ---------- input ---------- */
@@ -1527,7 +1678,7 @@ function endRun(win){
   $('#ov-dmg').textContent=Math.round(totalDmg);
   $('#ov-point').textContent=pts;
   $('#ov-best').textContent='Best ('+mode.name+'): '+Math.max(pts,prev)+(pts>prev?'  — NEW RECORD!':'');
-  const pf=$('#ov-pframe');pf.innerHTML='';pf.appendChild(mateSprite(charDef.body,charDef.shade,charDef.band,5));
+  const pf=$('#ov-pframe');pf.innerHTML='';pf.appendChild(charSprite(charDef,0,5));
   const sl=$('#ov-slots');sl.innerHTML='';
   for(const id in player.weapons){const d=document.createElement('div');d.className='ms';
     d.appendChild(WEAPONS[id].icon(2.5));
@@ -1584,7 +1735,7 @@ function buildCharScreen(){
   const grid=$('#char-grid');grid.innerHTML='';
   CHARS.forEach(c=>{
     const t=document.createElement('button');t.className='char-tile'+(c===charDef?' sel':'');
-    t.appendChild(mateSprite(c.body,c.shade,c.band,3));
+    t.appendChild(charSprite(c,0,3));
     t.onclick=()=>{SFX.click();charDef=c;
       document.querySelectorAll('.char-tile').forEach(x=>x.classList.remove('sel'));
       t.classList.add('sel');fillCharInfo()};
@@ -1617,7 +1768,7 @@ setInterval(()=>{
   if(!$('#screen-char').classList.contains('show'))return;
   previewAnim+=0.1;
   pcx.clearRect(0,0,120,140);
-  const sp=mateSprite(charDef.body,charDef.shade,charDef.band,9);
+  const sp=charSprite(charDef,((previewAnim*2)|0)%2,9);
   const bob=Math.sin(previewAnim*2)*3;
   pcx.drawImage(sp,(120-sp.width/1.2)/2|0,10+bob,sp.width/1.2,sp.height/1.2);
 },60);

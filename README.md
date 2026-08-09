@@ -7,7 +7,7 @@ A single-file HTML5 canvas survivors-like — a fan remake inspired by the gamep
 ## Features
 
 - 3 modes: **Normal** (10 min, 1000 pts win bonus), **Hard** (5 min, 120% pace, 4000 pts), **Cursed** (10 min, 80% stats, 1500 pts, wizard monsters)
-- 10 playable heroes of different races (Mate, Ninja, Robot, Ghost, Demon, Alien, Skeleton, Golem), each with Health/Armor/Speed/Luck traits, a unique starting weapon and a unique perk (regeneration, undead second life, pyromania, fast dash, etc.)
+- 10 playable heroes of different races (Mate, Ninja, Robot, Ghost, Demon, Alien, Skeleton, Golem), each with a distinct pixel sprite per race, Health/Armor/Speed/Luck traits, a unique starting weapon and a unique perk (regeneration, undead second life, pyromania, fast dash, etc.)
 - 12 auto-attacking weapons with 16 upgrade levels each: Knife, Machete, Sword, Bat, Shuriken, Grenade, Bazooka, Molotov, Laser, Drone, Frost Aura, Orbital
 - 11 passives: Damage+, Speed+, Health+, Armor+, Magnet+, Cooldown+, Luck+, Area+, Amount+, Crit Chance+, Crit Damage+
 - Weapon evolutions: max a weapon (lv.8) while holding its paired passive, then grab the chest from an elite/boss (e.g. Sword -> Excalibur, Grenade -> Cluster Bomb)
