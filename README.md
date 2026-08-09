@@ -8,8 +8,12 @@ A single-file HTML5 canvas survivors-like — a fan remake inspired by the gamep
 
 - 3 modes: **Normal** (10 min, 1000 pts win bonus), **Hard** (5 min, 120% pace, 4000 pts), **Cursed** (10 min, 80% stats, 1500 pts, wizard monsters)
 - 4 playable mates (Purple / Blue / White / Black) with Health, Armor, Speed and Luck traits and unique starting weapons
-- 8 auto-attacking weapons with 5 upgrade levels each: Knife, Machete, Sword, Bat, Shuriken, Grenade, Bazooka, Molotov
-- 7 passives: Damage+, Speed+, Health+, Armor+, Magnet+, Haste+, Luck+
+- 12 auto-attacking weapons with 8 upgrade levels each: Knife, Machete, Sword, Bat, Shuriken, Grenade, Bazooka, Molotov, Laser, Drone, Frost Aura, Orbital
+- 11 passives: Damage+, Speed+, Health+, Armor+, Magnet+, Cooldown+, Luck+, Area+, Amount+, Crit Chance+, Crit Damage+
+- Weapon evolutions: max a weapon (lv.8) while holding its paired passive, then grab the chest from an elite/boss (e.g. Sword -> Excalibur, Grenade -> Cluster Bomb)
+- Dash on Space (touch: DASH button) with i-frames and cooldown
+- Horde events every 2 minutes: the timer flashes red and a wall of fast monsters floods in
+- Crit system, elite auras, up to 6 weapon + 6 passive slots
 - Level-up card picker with reroll, XP gems, magnet radius
 - Monster waves that scale over time, elites every minute, mid-run boss and final boss
 - Consumables: potion, magnet, bomb (keys 1/2/3)
@@ -22,6 +26,7 @@ A single-file HTML5 canvas survivors-like — a fan remake inspired by the gamep
 | Input | Action |
 |---|---|
 | WASD / arrows / touch drag | move |
+| Space / DASH button | dash |
 | 1 / 2 / 3 | use potion / magnet / bomb |
 | P / Esc | pause |
 | R (on game over) | retry |
