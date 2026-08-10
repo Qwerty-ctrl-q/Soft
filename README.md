@@ -8,6 +8,8 @@ A single-file HTML5 canvas survivors-like — a fan remake inspired by the gamep
 
 - 6 modes: **Normal**, **Hard**, **Cursed** (wizards), **Endless** (survive forever, biomes rotate every 2 min), **Boss Rush** (a boss every minute), **Gold Rush** (x6 coin drops)
 - 4 biomes/locations: dirt, snow, lava, swamp
+- A full main menu (Play / Campaign / Heroes / Goals) with hero parade, coins and energy
+- A campaign map screen: 100 mission nodes on a winding path, unlocked as you progress; tap a node to see the objective and START it in the right mode
 - A 100-mission campaign line with varied objectives (kill counts per monster type, boss hunts, mode wins, no-hit runs, evolutions) and growing coin rewards
 - Every monster type drops its own gem color
 - 10 playable heroes of different races (Mate, Ninja, Robot, Ghost, Demon, Alien, Skeleton, Golem), each a full humanoid pixel character with race outfit, held weapon and a 4-frame walk cycle, Health/Armor/Speed/Luck traits, a unique starting weapon and a unique perk (regeneration, undead second life, pyromania, fast dash, etc.)
