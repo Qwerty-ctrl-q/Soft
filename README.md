@@ -18,7 +18,10 @@ A single-file HTML5 canvas survivors-like — a fan remake inspired by the gamep
 - 11 monster types with distinct behaviors (splitting slimes, phasing ghosts, burst-moving spiders, wobbling bats, tanky brutes), elites every minute, mini-bosses every 2.5 minutes, and three distinct bosses per run: Crab King, orb-casting Wizard King and the final Demon
 - Consumables: potion, magnet, bomb (keys 1/2/3)
 - Chiptune music + SFX (WebAudio), pause, FPS/monster counters
-- Win/Game-over screen with points and local best-score records
+- Win/Game-over screen with points, coins earned, completed missions/achievements and local best-score records
+- Meta progression: coins drop from monsters and elites, 6 of the 10 heroes are unlocked with coins (300-1000c)
+- Rotating missions (3 active, endless tiers with growing targets and rewards) with a live in-run tracker
+- 12 achievements and a profile stats panel (GOALS button on the title screen)
 - Keyboard (WASD/arrows) and touch (virtual joystick) controls
 
 ## Controls
