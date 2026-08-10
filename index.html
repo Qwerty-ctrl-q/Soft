@@ -133,6 +133,8 @@ button{font-family:'PS2P',monospace;cursor:pointer}
 #hud-missions{top:calc(14px + clamp(44px,7vw,56px) + 66px);left:14px;display:flex;flex-direction:column;gap:3px}
 #hud-missions .mrow{font-size:7px;color:#8d7a3f;background:rgba(10,8,2,.5);border-radius:4px;padding:3px 6px}
 #hud-missions .mrow b{color:#c9b16a;font-weight:400}
+#hud-missions .mrow.crow{color:#7cd0d8;border:1px solid #2a4a52}
+#hud-missions .mrow.crow b{color:#a8e8f0}
 .goals-wrap{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:14px}
 .goals-panel{width:min(560px,94vw);max-height:64vh;overflow-y:auto;background:rgba(32,25,6,.97);
   border:3px solid var(--gold-dim);border-radius:10px;padding:16px 18px}
@@ -289,6 +291,7 @@ button{font-family:'PS2P',monospace;cursor:pointer}
         <h5>How to play</h5>
         <p class="ghelp">Survive until the timer runs out and beat the final boss. Kill monsters, collect gems, pick upgrades, evolve weapons. Winning grants the mode bonus. Earn coins to unlock new heroes.</p>
       </div>
+      <div class="gsec"><h5>Campaign</h5><div id="goals-camp"></div></div>
       <div class="gsec"><h5>Missions</h5><div id="goals-missions"></div></div>
       <div class="gsec"><h5>Achievements</h5><div id="goals-ach"></div></div>
       <div class="gsec"><h5>Profile stats</h5><div id="goals-stats"></div></div>
@@ -690,6 +693,11 @@ const GEM=[
 '...OO...',
 '........'];
 const gemS=(s,big)=>makeSprite(GEM,big?{O,L:'#39e0a4',W:'#c8ffe9'}:{O,L:'#2ea8f0',W:'#b8e6ff'},s);
+const GEM_CACHE={};
+function gemSprite(col,big){
+  const k=col+(big?'B':'S');
+  if(!GEM_CACHE[k])GEM_CACHE[k]=makeSprite(GEM,{O,L:col,W:shadeHex(col,1.6)},big?4:3);
+  return GEM_CACHE[k]}
 /* items */
 const POTION=[
 '..OOO..',
@@ -826,6 +834,10 @@ const BRUTE_F1=[
 '.ODDO...ODDO.',
 '..OO.....OO..'];
 const bruteMobS=(fr,sc=4)=>makeSprite(BRUTE_F1,{O,B:'#8a6d55',D:'#6b5544',E:'#ffffff',P:'#1c1b17',M:'#3d2a1a'},sc);
+const waspMobS=(fr,sc=4)=>makeSprite(fr?BAT_F2:BAT_F1,{O,W:'#ffe83a',B:'#b8901c',E:'#23201a'},sc);
+const rockMobS=(fr,sc=4)=>makeSprite(BRUTE_F1,{O,B:'#9aa3ad',D:'#6b7078',E:'#ffd83d',P:'#1c1b17',M:'#3d4148'},sc);
+const bomberMobS=(fr,sc=4)=>makeSprite(fr?SLIME_F2:SLIME_F1,{O,G:'#ff6b35',W:'#ffd83d',E:'#1c1b17'},sc);
+const shadeMobS=(fr,sc=4)=>makeSprite(fr?GHOST_F2:GHOST_F1,{O:'#3d3654',W:'#5d4a8a',E:'#e8ccff',M:'#e8ccff'},sc);
 const LASERGUN=[
 '........OO',
 'OOOOOOOOFO',
@@ -894,9 +906,12 @@ const padlockS=s=>makeSprite(PADLOCK,{O,G:'#e8a219'},s);
 
 /* ---------- data ---------- */
 const MODES={
-  normal:{name:'Normal',dur:600,pace:1.0,winBonus:1000,statsRate:1.0,hpMul:1.0},
-  hard:{name:'Hard',dur:300,pace:1.2,winBonus:4000,statsRate:1.0,hpMul:1.45},
-  cursed:{name:'Cursed',dur:600,pace:1.0,winBonus:1500,statsRate:0.8,hpMul:1.1,cursed:true},
+  normal:{name:'Normal',dur:600,pace:1.0,winBonus:1000,statsRate:1.0,hpMul:1.0,biome:'dirt'},
+  hard:{name:'Hard',dur:300,pace:1.2,winBonus:4000,statsRate:1.0,hpMul:1.45,biome:'lava'},
+  cursed:{name:'Cursed',dur:600,pace:1.0,winBonus:1500,statsRate:0.8,hpMul:1.1,cursed:true,biome:'swamp'},
+  endless:{name:'Endless',dur:1e9,pace:1.0,winBonus:0,statsRate:1.0,hpMul:1.0,endless:true,biome:'dirt'},
+  bossrush:{name:'Boss Rush',dur:300,pace:1.0,winBonus:3000,statsRate:1.0,hpMul:0.75,bossrush:true,biome:'lava'},
+  goldrush:{name:'Gold Rush',dur:300,pace:1.1,winBonus:800,statsRate:1.0,hpMul:0.9,gold:true,biome:'snow'},
 };
 const CHARS=[
   {id:'purple',price:0,form:'matetail',name:'Purple',race:'Mate',hp:24,armor:2,speed:1.1,luck:1.2,weapon:'sword',
@@ -1075,7 +1090,73 @@ const ACH=[
  {id:'cursewin',name:'Curse Breaker',desc:'Win Cursed mode',reward:300,c:()=>pstats.winsCursed>=1},
  {id:'ghostrun',name:'Untouchable',desc:'60s without damage',reward:150,c:()=>pstats.maxNoHit>=60},
  {id:'rich',name:'Moneybags',desc:'Earn 2,000 coins total',reward:200,c:()=>pstats.coinsTotal>=2000},
+ {id:'camp10',name:'Adventurer',desc:'Complete 10 campaign missions',reward:150,c:()=>cIdx>=10},
+ {id:'camp25',name:'Veteran',desc:'Complete 25 campaign missions',reward:250,c:()=>cIdx>=25},
+ {id:'camp50',name:'Conqueror',desc:'Complete 50 campaign missions',reward:400,c:()=>cIdx>=50},
+ {id:'camp100',name:'Legend',desc:'Finish the 100-mission campaign',reward:1000,c:()=>cIdx>=100},
+ {id:'allheroes',name:'Full Roster',desc:'Unlock all 10 heroes',reward:500,c:()=>owned.length>=10},
+ {id:'bats',name:'Bat Swatter',desc:'Kill 200 bats',reward:100,c:()=>(pstats.killsBy.bat||0)>=200},
+ {id:'slimes',name:'Slime Cleaner',desc:'Kill 200 slimes',reward:100,c:()=>(pstats.killsBy.slime||0)+(pstats.killsBy.slimemini||0)>=200},
+ {id:'ghosts',name:'Ghostbuster',desc:'Kill 100 ghosts & shades',reward:120,c:()=>(pstats.killsBy.ghost||0)+(pstats.killsBy.shade||0)>=100},
+ {id:'brutes',name:'Giant Slayer',desc:'Kill 50 brutes & golems',reward:120,c:()=>(pstats.killsBy.brute||0)+(pstats.killsBy.rockgolem||0)>=50},
+ {id:'wasps',name:'Exterminator',desc:'Kill 300 wasps',reward:100,c:()=>(pstats.killsBy.wasp||0)>=300},
+ {id:'kills10k',name:'Massacre',desc:'10,000 total kills',reward:400,c:()=>pstats.kills>=10000},
+ {id:'endless10',name:'Marathoner',desc:'Survive 10:00 in Endless',reward:250,c:()=>(pstats.endlessBest||0)>=600},
+ {id:'rushwin',name:'Boss Rusher',desc:'Win a Boss Rush',reward:300,c:()=>(pstats.winsBy.bossrush||0)>=1},
+ {id:'goldwin',name:'Gold Digger',desc:'Win a Gold Rush',reward:200,c:()=>(pstats.winsBy.goldrush||0)>=1},
+ {id:'evo3',name:'Triple Evolution',desc:'Evolve 3 weapons in one run',reward:300,c:()=>(pstats.bestRunEvos||0)>=3},
+ {id:'lv30',name:'Ascended',desc:'Reach lv.30 in a run',reward:250,c:()=>pstats.bestLv>=30},
+ {id:'nohit120',name:'Ghost Walker',desc:'120s without damage',reward:300,c:()=>pstats.maxNoHit>=120},
+ {id:'coins10k',name:'Tycoon',desc:'Earn 10,000 coins total',reward:500,c:()=>pstats.coinsTotal>=10000},
 ];
+/* ---------- campaign: a 100-mission quest line ---------- */
+const CAMPAIGN=(()=>{
+  const L=[];
+  const kt=['crab','alien','bat','slime','spider','skeleton','ghost','brute','wasp','bomber'];
+  const cap=(w)=>w.charAt(0).toUpperCase()+w.slice(1);
+  for(let i=0;i<100;i++){
+    const tier=Math.floor(i/10),r=i%10;
+    if(r===9){
+      if(i===9)L.push({t:'bossKind',sub:'crabking',n:1,name:'Defeat the Crab King'});
+      else if(i===19)L.push({t:'winMode',sub:'normal',n:1,name:'Win a Normal run'});
+      else if(i===29)L.push({t:'bossKind',sub:'wizardking',n:1,name:'Defeat the Wizard King'});
+      else if(i===39)L.push({t:'winMode',sub:'hard',n:1,name:'Win a Hard run'});
+      else if(i===49)L.push({t:'evo',n:1,name:'Evolve a weapon'});
+      else if(i===59)L.push({t:'winMode',sub:'cursed',n:1,name:'Win a Cursed run'});
+      else if(i===69)L.push({t:'bossKind',sub:'demon',n:1,name:'Slay the final Demon'});
+      else if(i===79)L.push({t:'level',n:25,name:'Reach level 25 in one run'});
+      else if(i===89)L.push({t:'winMode',sub:'bossrush',n:1,name:'Win a Boss Rush'});
+      else L.push({t:'endless',n:900,name:'Survive 15:00 in Endless'});
+    }else if(r===0)L.push({t:'kills',n:100+tier*150,name:'Defeat '+(100+tier*150)+' monsters'});
+    else if(r===1){const k=kt[tier%kt.length];L.push({t:'ktype',sub:k,n:30+tier*25,name:'Defeat '+(30+tier*25)+' '+cap(k)+'s'})}
+    else if(r===2)L.push({t:'gems',n:150+tier*150,name:'Collect '+(150+tier*150)+' gems'});
+    else if(r===3)L.push({t:'coins',n:40+tier*40,name:'Pick up '+(40+tier*40)+' coins'});
+    else if(r===4){const sec=Math.min(560,180+tier*45);L.push({t:'survive',n:sec,name:'Survive '+fmtTime(sec)+' in one run'})}
+    else if(r===5)L.push({t:'crits',n:40+tier*45,name:'Land '+(40+tier*45)+' critical hits'});
+    else if(r===6)L.push({t:'dashes',n:15+tier*12,name:'Dash '+(15+tier*12)+' times'});
+    else if(r===7)L.push({t:'elites',n:4+tier*3,name:'Kill '+(4+tier*3)+' elite monsters'});
+    else{const k=kt[(tier+5)%kt.length];
+      if(tier%2)L.push({t:'items',n:6+tier*4,name:'Use '+(6+tier*4)+' consumables'});
+      else L.push({t:'mids',n:2+tier*2,name:'Defeat '+(2+tier*2)+' mini-bosses'})}
+  }
+  return L})();
+let cIdx=store.get('cidx',0),cProg=store.get('cprog',0);
+function campReward(i){return 100+i*10}
+function campEvent(t,n,sub){
+  if(cIdx>=CAMPAIGN.length)return;
+  const m=CAMPAIGN[cIdx];
+  if(m.t!==t)return;
+  if(m.sub&&m.sub!==sub)return;
+  if(t==='survive'||t==='level'||t==='endless')cProg=Math.max(cProg,n);
+  else cProg+=n;
+  if(cProg>=m.n){
+    const rw=campReward(cIdx);
+    coins+=rw;pstats.coinsTotal+=rw;
+    runReport.push('CAMPAIGN M'+(cIdx+1)+': '+m.name+' +'+rw+'c');
+    if(state==='run'){addFloat(player.x,player.y-76,'CAMPAIGN M'+(cIdx+1)+' DONE! +'+rw+'c','#7cd0d8',1.3);SFX.lvl()}
+    cIdx++;cProg=0;
+    store.set('cidx',cIdx);store.set('cprog',cProg)}
+}
 let coins=store.get('coins',0);
 let owned=store.get('owned',['purple','blue','white','black']);
 let mtier=store.get('mtier',{});
@@ -1083,15 +1164,20 @@ let mslots=store.get('mslots',null);
 let mnext=store.get('mnext',3);
 let ach=store.get('ach',{});
 let pstats=Object.assign({runs:0,wins:0,winsHard:0,winsCursed:0,kills:0,gems:0,coinsTotal:0,
-  dashes:0,crits:0,elites:0,bosses:0,evos:0,items:0,bestLv:0,maxNoHit:0,fullArsenal:0},
+  dashes:0,crits:0,elites:0,bosses:0,evos:0,items:0,bestLv:0,maxNoHit:0,fullArsenal:0,
+  endlessBest:0,bestRunEvos:0},
   store.get('pstats',{}));
+if(!pstats.killsBy)pstats.killsBy={};
+if(!pstats.winsBy)pstats.winsBy={};
+let runEvos=0;
 if(!mslots)mslots=[0,1,2].map(i=>({idx:i,prog:0}));
 let runCoins=0,runReport=[],noHitT=0,lastSurvSec=0;
 function mDef(sl){return MISSION_POOL[sl.idx%MISSION_POOL.length]}
 function mTarget(m){const t=mtier[m.id]||0;const v=Math.round(m.base*Math.pow(2,t));return m.cap?Math.min(m.cap,v):v}
 function mReward(m){const t=mtier[m.id]||0;return Math.round(m.reward*Math.pow(1.5,t))}
 function saveMeta(){store.set('coins',coins);store.set('owned',owned);store.set('mtier',mtier);
-  store.set('mslots',mslots);store.set('mnext',mnext);store.set('ach',ach);store.set('pstats',pstats)}
+  store.set('mslots',mslots);store.set('mnext',mnext);store.set('ach',ach);store.set('pstats',pstats);
+  store.set('cidx',cIdx);store.set('cprog',cProg)}
 function missionProgress(type,n){
   for(const sl of mslots){
     const m=mDef(sl);
@@ -1114,8 +1200,12 @@ function checkAch(){
   saveMeta()}
 function renderMissionHud(){
   const el=$('#hud-missions');if(!el)return;
-  el.innerHTML=mslots.map(sl=>{const m=mDef(sl);
-    return '<div class="mrow">'+m.name+' <b>'+Math.min(sl.prog,mTarget(m))+'/'+mTarget(m)+'</b></div>'}).join('')}
+  let h='';
+  if(cIdx<CAMPAIGN.length){const cm=CAMPAIGN[cIdx];
+    h+='<div class="mrow crow">M'+(cIdx+1)+': '+cm.name+' <b>'+Math.min(cProg,cm.n)+'/'+cm.n+'</b></div>'}
+  h+=mslots.map(sl=>{const m=mDef(sl);
+    return '<div class="mrow">'+m.name+' <b>'+Math.min(sl.prog,mTarget(m))+'/'+mTarget(m)+'</b></div>'}).join('');
+  el.innerHTML=h}
 
 /* ---------- audio ---------- */
 let AC=null,masterGain=null,musicGain=null,musicTimer=null,musicStep=0;
@@ -1182,7 +1272,8 @@ function resize(){
 window.addEventListener('resize',resize);resize();
 
 /* ground tile (seeded) */
-function makeGround(seed,base,dark,light){
+function makeGround(seed,base,dark,light,grass,stone){
+  grass=grass||'#5d6b35';stone=stone||'#7d7466';
   let s=seed;const rand=()=>((s=s*1103515245+12345>>>0)/4294967296);
   const T=192,c=document.createElement('canvas');c.width=T;c.height=T;
   const g=c.getContext('2d');
@@ -1191,13 +1282,21 @@ function makeGround(seed,base,dark,light){
     g.globalAlpha=0.16+rand()*0.22;
     const w=2+rand()*7;g.fillRect(rand()*T,rand()*T,w,w*(0.5+rand()*0.8))}
   g.globalAlpha=0.5;
-  for(let i=0;i<26;i++){g.fillStyle='#5d6b35';const x=rand()*T,y=rand()*T;
+  for(let i=0;i<26;i++){g.fillStyle=grass;const x=rand()*T,y=rand()*T;
     g.fillRect(x,y,2,4);g.fillRect(x+3,y+1,2,3)}
-  for(let i=0;i<14;i++){g.fillStyle='#7d7466';const x=rand()*T,y=rand()*T,r=2+rand()*4;
+  for(let i=0;i<14;i++){g.fillStyle=stone;const x=rand()*T,y=rand()*T,r=2+rand()*4;
     g.beginPath();g.arc(x,y,r,0,7);g.fill()}
   g.globalAlpha=1;return c}
 const groundTile=makeGround(7,'#6e5c3d','#584832','#7d6a48');
 const groundTileCursed=makeGround(13,'#4a3d4e','#3a2f3e','#5d4c62');
+const TILES={
+  dirt:groundTile,
+  swamp:groundTileCursed,
+  snow:makeGround(21,'#c3ccd3','#a8b4bd','#dde6ec','#7ca8b8','#93a0aa'),
+  lava:makeGround(33,'#3a2528','#2a1a1c','#4d3033','#ff6b35','#5d3a3e'),
+};
+const BIOME_CYCLE=['dirt','snow','lava','swamp'];
+let currentBiome='dirt',biomeT=0;
 
 /* ---------- prebuilt sprites ---------- */
 const SP={
@@ -1216,6 +1315,8 @@ const SP={
   spiders:[spiderMobS(0),spiderMobS(1)],ghosts:[ghostMobS(0),ghostMobS(1)],
   skels:[skelMobS(0),skelMobS(1)],brutes:[bruteMobS(0),bruteMobS(1)],
   crabKing:crabSprite(0,'#c0392b',9),wizardKing:wizardSprite(8),
+  wasps:[waspMobS(0),waspMobS(1)],rocks:[rockMobS(0),rockMobS(1)],
+  bombers:[bomberMobS(0),bomberMobS(1)],shades:[shadeMobS(0),shadeMobS(1)],
 };
 const CHAR_SPRITES={};
 CHARS.forEach(c=>{CHAR_SPRITES[c.id]=[0,1,2,3].map(fr=>charSprite(c,fr,3))});
@@ -1261,7 +1362,7 @@ let cam={x:0,y:0},shake=0;
 let time=0,kills=0,totalDmg=0,fps=60,fpsAcc=0,fpsN=0;
 let monsters=[],projectiles=[],gems=[],pools=[],pickups=[],particles=[],floats=[],orbs=[];
 let spawnT=0,eliteT=0,bossSpawned=[],levelQueue=0,rerolls=2;
-let hordeNext=120,hordeEnd=0,hordeDir=0,hordeSpawnT=0,midT=0;
+let hordeNext=120,hordeEnd=0,hordeDir=0,hordeSpawnT=0,midT=0,brT=0,brMidT=0,bossCycle=0;
 let dashWish=false;
 let player=null;
 
@@ -1307,7 +1408,8 @@ function evolveWeapon(id){
   if(w.range)w.range*=1.3;
   if(w.width)w.width*=1.8;
   if(w.pierce)w.pierce+=4;
-  pstats.evos++;missionProgress('evos',1);
+  pstats.evos++;missionProgress('evos',1);campEvent('evo',1);
+  runEvos++;if(runEvos>(pstats.bestRunEvos||0))pstats.bestRunEvos=runEvos;
   addFloat(player.x,player.y-70,'EVOLUTION!','#ffd83d',1.8);
   addFloat(player.x,player.y-46,EVO[id].name+'!','#fff',1.2);
   SFX.win();renderSlots()}
@@ -1323,26 +1425,32 @@ function upgradePassive(id){
 
 /* ---------- entities ---------- */
 const MTYPES={
-  alien:{sk:'aliens',hp:10,speed:46,dmg:3,xp:1,r:20},
-  crab:{sk:'crabsO',hp:7,speed:72,dmg:4,xp:1,r:19},
-  redcrab:{sk:'crabsR',hp:26,speed:56,dmg:6,xp:2,r:21},
-  purplecrab:{sk:'crabsP',hp:40,speed:64,dmg:7,xp:3,r:21},
-  bat:{sk:'bats',hp:6,speed:98,dmg:3,xp:1,r:16,wob:true},
-  slime:{sk:'slimes',hp:24,speed:34,dmg:4,xp:2,r:20,split:true},
-  slimemini:{sk:'slimes',hp:6,speed:62,dmg:2,xp:1,r:12,mini:true},
-  spider:{sk:'spiders',hp:14,speed:66,dmg:5,xp:2,r:18,burst:true},
-  skeleton:{sk:'skels',hp:36,speed:40,dmg:7,xp:3,r:20},
-  ghost:{sk:'ghosts',hp:16,speed:52,dmg:5,xp:2,r:18,ghost:true},
-  brute:{sk:'brutes',hp:75,speed:29,dmg:12,xp:4,r:26},
+  alien:{sk:'aliens',hp:10,speed:46,dmg:3,xp:1,r:20,gcol:'#3ecf5a'},
+  crab:{sk:'crabsO',hp:7,speed:72,dmg:4,xp:1,r:19,gcol:'#ff9a3a'},
+  redcrab:{sk:'crabsR',hp:26,speed:56,dmg:6,xp:2,r:21,gcol:'#ff4b2e'},
+  purplecrab:{sk:'crabsP',hp:40,speed:64,dmg:7,xp:3,r:21,gcol:'#b45cff'},
+  bat:{sk:'bats',hp:6,speed:98,dmg:3,xp:1,r:16,wob:true,gcol:'#8a7ba8'},
+  slime:{sk:'slimes',hp:24,speed:34,dmg:4,xp:2,r:20,split:true,gcol:'#7ad83a'},
+  slimemini:{sk:'slimes',hp:6,speed:62,dmg:2,xp:1,r:12,mini:true,gcol:'#7ad83a'},
+  spider:{sk:'spiders',hp:14,speed:66,dmg:5,xp:2,r:18,burst:true,gcol:'#e8e8e8'},
+  skeleton:{sk:'skels',hp:36,speed:40,dmg:7,xp:3,r:20,gcol:'#e8e4d4'},
+  ghost:{sk:'ghosts',hp:16,speed:52,dmg:5,xp:2,r:18,ghost:true,gcol:'#8ab4ff'},
+  brute:{sk:'brutes',hp:75,speed:29,dmg:12,xp:4,r:26,gcol:'#c9a46b'},
+  wasp:{sk:'wasps',hp:5,speed:118,dmg:2,xp:1,r:14,wob:true,gcol:'#ffe83a'},
+  bomber:{sk:'bombers',hp:12,speed:82,dmg:5,xp:2,r:18,bomber:true,gcol:'#ff6b35'},
+  shade:{sk:'shades',hp:24,speed:72,dmg:6,xp:3,r:18,ghost:true,gcol:'#6b5cff'},
+  rockgolem:{sk:'rocks',hp:135,speed:23,dmg:14,xp:5,r:27,gcol:'#9aa3ad'},
 };
+const ROSTER=[
+ ['crab',0,1],['alien',10,1],['bat',50,0.8],['wasp',70,0.7],['slime',100,0.8],
+ ['redcrab',120,0.7],['bomber',150,0.6],['spider',190,0.7],['skeleton',220,0.7],
+ ['ghost',260,0.6],['shade',290,0.5],['brute',310,0.5],['rockgolem',350,0.4],['purplecrab',380,0.5]];
 function pickType(t){
-  const r=Math.random();
-  if(t<25)return r<0.7?'crab':'alien';
-  if(t<90)return r<0.45?'crab':r<0.8?'alien':'bat';
-  if(t<180)return r<0.3?'alien':r<0.55?'crab':r<0.7?'bat':r<0.85?'slime':'redcrab';
-  if(t<300)return r<0.2?'crab':r<0.35?'bat':r<0.5?'slime':r<0.65?'redcrab':r<0.82?'spider':'skeleton';
-  return r<0.14?'bat':r<0.28?'slime':r<0.42?'redcrab':r<0.56?'spider':r<0.7?'skeleton':r<0.82?'ghost':r<0.93?'brute':'purplecrab';
-}
+  const av=ROSTER.filter(e=>t>=e[1]);
+  let tot=0;for(const e of av)tot+=e[2];
+  let r=Math.random()*tot;
+  for(const e of av){r-=e[2];if(r<=0)return e[0]}
+  return 'crab'}
 function spawnMonster(type,elite=false){
   const t=MTYPES[type];
   const a=Math.random()*Math.PI*2,R=Math.hypot(W,H)/2+60;
@@ -1394,8 +1502,8 @@ function addPuff(x,y,n){
   particles.push({x,y,t:0,life:0.45,kind:'puff',n})}
 function addBoomFx(x,y,r){
   particles.push({x,y,t:0,life:0.35,kind:'boom',r});shake=Math.min(shake+5,12)}
-function dropGem(x,y,val){
-  gems.push({x,y:y,vx:rnd(-30,30),vy:rnd(-30,30),val,big:val>=5,t:0})}
+function dropGem(x,y,val,col){
+  gems.push({x,y:y,vx:rnd(-30,30),vy:rnd(-30,30),val,big:val>=5,t:0,col:col||'#2ea8f0'})}
 function maybeDrop(x,y){
   const luck=player.luck();
   if(Math.random()<0.012*luck){
@@ -1577,16 +1685,23 @@ function hitMonster(m,dmg,knock=0,dx=0,dy=0,crit=false){
   const dl=Math.hypot(dx,dy)||1;
   m.kx+=dx/dl*knock*(m.boss?0.15:1);m.ky+=dy/dl*knock*(m.boss?0.15:1);
   addFloat(m.x+rnd(-8,8),m.y-m.r-6,String(Math.round(dmg)),crit?'#ffd83d':'#fff',crit?1.35:1);
-  if(crit){pstats.crits++;missionProgress('crits',1)}
+  if(crit){pstats.crits++;missionProgress('crits',1);campEvent('crits',1)}
   SFX.hitm();
   if(m.hp<=0)killMonster(m)}
 let _crit=false;
 function killMonster(m){
   m.dead=true;kills++;
-  pstats.kills++;missionProgress('kills',1);
-  if(m.elite||m.mid){pstats.elites++;missionProgress('elites',1)}
-  if(m.boss){pstats.bosses++;missionProgress('bosses',1)}
-  if(!m.boss&&!m.mini&&Math.random()<0.05*player.luck())pickups.push({x:m.x+rnd(-14,14),y:m.y,kind:'coin',t:0});
+  if(m.bomberM===undefined)m.bomberM=!!(MTYPES[m.type]&&MTYPES[m.type].bomber);
+  if(m.bomberM){addBoomFx(m.x,m.y,64);
+    if(dist2(m.x,m.y,player.x,player.y)<80*80)hurtPlayer(8);
+    for(const n of monsters)if(n!==m&&!n.dead&&dist2(n.x,n.y,m.x,m.y)<70*70)hitMonster(n,10,60,n.x-m.x,n.y-m.y)}
+  pstats.kills++;missionProgress('kills',1);campEvent('kills',1);
+  pstats.killsBy[m.type]=(pstats.killsBy[m.type]||0)+1;
+  campEvent('ktype',1,m.type);
+  if(m.elite||m.mid){pstats.elites++;missionProgress('elites',1);campEvent('elites',1)}
+  if(m.mid)campEvent('mids',1);
+  if(m.boss){pstats.bosses++;missionProgress('bosses',1);campEvent('bossKind',1,m.kind)}
+  if(!m.boss&&!m.mini&&Math.random()<0.05*player.luck()*(mode.gold?6:1))pickups.push({x:m.x+rnd(-14,14),y:m.y,kind:'coin',t:0});
   addPuff(m.x,m.y);
   if(m.boss){
     for(let i=0;i<20;i++)pickups.push({x:m.x+rnd(-60,60),y:m.y+rnd(-60,60),kind:'coin',t:0});
@@ -1601,7 +1716,7 @@ function killMonster(m){
     pickups.push({x:m.x+rnd(-30,30),y:m.y+rnd(-30,30),kind:pick(['potion','magnet','bomb']),t:0});
     addBoomFx(m.x,m.y,60);
   }else{
-    dropGem(m.x,m.y,m.elite?5:m.xp>=2?2:1);
+    dropGem(m.x,m.y,m.elite?5:m.xp>=2?2:1,MTYPES[m.type]&&MTYPES[m.type].gcol);
     if(m.elite)pickups.push({x:m.x+rnd(-20,20),y:m.y,kind:evoCandidate()?'chest':pick(['potion','magnet','bomb']),t:0});
     else maybeDrop(m.x,m.y);
     if(m.split&&!m.mini){
@@ -1637,7 +1752,7 @@ let inventory={potion:1,magnet:0,bomb:0};
 function useItem(kind){
   if(state!=='run'||!inventory[kind])return;
   inventory[kind]--;SFX.item();
-  pstats.items++;missionProgress('items',1);
+  pstats.items++;missionProgress('items',1);campEvent('items',1);
   if(kind==='potion'){player.hp=Math.min(player.maxHp(),player.hp+Math.round(player.maxHp()*0.4));
     addFloat(player.x,player.y-44,'+HP','#2ee6a8',1.3)}
   if(kind==='magnet'){for(const g of gems)g.pull=true;
@@ -1747,7 +1862,7 @@ function startRun(){
   monsters=[];projectiles=[];gems=[];pools=[];pickups=[];particles=[];floats=[];orbs=[];
   time=0;kills=0;totalDmg=0;spawnT=0;eliteT=0;bossSpawned=[];levelQueue=0;rerolls=2+(charDef.luck>=1.2?1:0)+player.rerollBonus;
   hordeNext=120;hordeEnd=0;hordeSpawnT=0;dashWish=false;midT=0;
-  runCoins=0;runReport=[];noHitT=0;lastSurvSec=0;
+  runCoins=0;runReport=[];noHitT=0;lastSurvSec=0;runEvos=0;
   $('#hud-timer').classList.remove('horde');
   inventory={potion:1,magnet:0,bomb:0};
   player.x=0;player.y=0;cam.x=0;cam.y=0;
@@ -1755,20 +1870,23 @@ function startRun(){
   renderSlots();renderItems();renderMissionHud();
   show('#hud');
   state='run';
-  addFloat(0,-90,'GOAL: SURVIVE '+fmtTime(mode.dur),'#ffd83d',1.3);
+  currentBiome=mode.biome||'dirt';biomeT=0;brT=0;brMidT=0;
+  addFloat(0,-90,mode.endless?'GOAL: SURVIVE AS LONG AS YOU CAN':'GOAL: SURVIVE '+fmtTime(mode.dur),'#ffd83d',1.3);
   if(musicOn)startMusic();
   last=performance.now()}
 function endRun(win){
   state='over';
   stopMusic();
   win?SFX.win():SFX.over();
-  const pts=Math.round(kills+totalDmg/100+player.lv*4+(win?mode.winBonus:0));
+  const pts=Math.round(kills+totalDmg/100+player.lv*4+(mode.endless?time*2:0)+(win?mode.winBonus:0));
+  if(mode.endless&&time>(pstats.endlessBest||0))pstats.endlessBest=Math.floor(time);
   const bkey=modeKey;
   const prev=bestScores[bkey]||0;
   if(pts>prev){bestScores[bkey]=pts;store.set('best',bestScores)}
   /* meta: stats, coins, missions, achievements */
   pstats.runs++;
-  if(win){pstats.wins++;missionProgress('wins',1);
+  if(win){pstats.wins++;missionProgress('wins',1);campEvent('winMode',1,modeKey);
+    pstats.winsBy[modeKey]=(pstats.winsBy[modeKey]||0)+1;
     if(modeKey==='hard')pstats.winsHard++;
     if(modeKey==='cursed')pstats.winsCursed++}
   const ptCoins=Math.floor(pts/10);
@@ -1820,6 +1938,13 @@ $('#btn-sound').onclick=function(){soundOn=!soundOn;store.set('sound',soundOn);
 /* ---------- goals overlay ---------- */
 function renderGoals(){
   $('#coins-title').textContent=coins;
+  if(cIdx>=CAMPAIGN.length){
+    $('#goals-camp').innerHTML='<p class="ghelp">CAMPAIGN COMPLETE! All 100 missions done. Legend.</p>'}
+  else{const cm=CAMPAIGN[cIdx];
+    $('#goals-camp').innerHTML='<div class="gm"><div class="gm-top"><span>Mission '+(cIdx+1)+'/100: '+cm.name+'</span>'+
+      '<span class="rw">+'+campReward(cIdx)+'c</span></div>'+
+      '<div class="bar"><i style="width:'+Math.min(100,cProg/cm.n*100).toFixed(0)+'%"></i></div>'+
+      '<div class="gm-top" style="padding-top:3px"><span></span><span>'+Math.min(cProg,cm.n)+'/'+cm.n+'</span></div></div>'}
   $('#goals-missions').innerHTML=mslots.map(sl=>{
     const m=mDef(sl),tgt=mTarget(m),t=mtier[m.id]||0;
     return '<div class="gm"><div class="gm-top"><span>'+m.name+(t?' ['+(t+1)+']':'')+'</span>'+
@@ -1829,7 +1954,8 @@ function renderGoals(){
   $('#goals-ach').innerHTML=ACH.map(a=>
     '<div class="garow'+(ach[a.id]?' done':'')+'"><span>'+(ach[a.id]?'&#9733; ':'&#9734; ')+a.name+
     '</span><span class="gdesc">'+a.desc+'</span><span>+'+a.reward+'c</span></div>').join('');
-  const st=[['Runs',pstats.runs],['Wins',pstats.wins],['Total kills',pstats.kills],
+  const st=[['Campaign',Math.min(cIdx,100)+'/100'],['Endless best',fmtTime(pstats.endlessBest||0)],
+    ['Runs',pstats.runs],['Wins',pstats.wins],['Total kills',pstats.kills],
     ['Gems collected',pstats.gems],['Coins earned',pstats.coinsTotal],['Bosses slain',pstats.bosses],
     ['Weapons evolved',pstats.evos],['Best level',pstats.bestLv],
     ['Longest no-hit',pstats.maxNoHit+'s'],
@@ -1842,7 +1968,8 @@ $('#coin-ico2').appendChild(coinS(2));
 $('#coin-ico3').appendChild(coinS(2.5));
 
 /* ---------- title screen ---------- */
-const MODE_ICONS={normal:()=>crabSprite(0,'#ff6b35',3),hard:()=>demonSprite('#e5352b',3.4),cursed:()=>wizardSprite(3.2)};
+const MODE_ICONS={normal:()=>crabSprite(0,'#ff6b35',3),hard:()=>demonSprite('#e5352b',3.4),cursed:()=>wizardSprite(3.2),
+  endless:()=>shadeMobS(0,3.4),bossrush:()=>demonSprite('#7a1f96',3.4),goldrush:()=>coinS(5)};
 function buildModeCards(){
   const box=$('#mode-cards');box.innerHTML='';
   Object.entries(MODES).forEach(([key,m])=>{
@@ -1851,7 +1978,7 @@ function buildModeCards(){
     const mob=document.createElement('div');mob.className='mob';mob.appendChild(MODE_ICONS[key]());
     const h=document.createElement('h3');h.textContent=m.name.toUpperCase();
     el.append(mob,h);
-    [['⌛ Duration',(m.dur/60)+' mins'],['✋ Game Pace',Math.round(m.pace*100)+'%'],
+    [['⌛ Duration',m.endless?'∞':(m.dur/60)+' mins'],['✋ Game Pace',Math.round(m.pace*100)+'%'],
      ['🏆 Win Bonus',m.winBonus+' pts'],['❤ Stats Rate',Math.round(m.statsRate*100)+'%']]
     .forEach(([k,v])=>{
       const r=document.createElement('div');r.className='row';
@@ -1953,7 +2080,7 @@ function update(dt){
   if(dashWish){dashWish=false;
     if(player.dashCd<=0){
       player.dashCd=2.2*player.dashCdMul;player.dashT=0.16;
-      pstats.dashes++;missionProgress('dashes',1);
+      pstats.dashes++;missionProgress('dashes',1);campEvent('dashes',1);
       player.dashDx=im>0.1?ix:player.face;player.dashDy=im>0.1?iy:0;
       player.iframe=Math.max(player.iframe,0.34);
       blip(500,0.1,'square',0.1,-260)}}
@@ -1964,16 +2091,23 @@ function update(dt){
   if(player.regen)player.hp=Math.min(player.maxHp(),player.hp+player.regen*dt);
   cam.x+=(player.x-cam.x)*Math.min(1,dt*6);
   cam.y+=(player.y-cam.y)*Math.min(1,dt*6);
+  /* endless: biome cycles */
+  if(mode.endless){biomeT+=dt;
+    if(biomeT>=120){biomeT=0;
+      currentBiome=BIOME_CYCLE[(BIOME_CYCLE.indexOf(currentBiome)+1)%BIOME_CYCLE.length];
+      addFloat(player.x,player.y-80,'BIOME: '+currentBiome.toUpperCase(),'#7cd0d8',1.4)}}
   /* spawns */
   spawnT-=dt;
   const interval=Math.max(0.22,(1.15-time*0.004))/mode.pace;
-  if(spawnT<=0&&monsters.length<240){
+  if(!mode.bossrush&&spawnT<=0&&monsters.length<240){
     spawnT=interval;
     const batch=1+Math.floor(time/50);
     for(let i=0;i<batch;i++)spawnMonster(pickType(time));
     if(mode.cursed&&time>45&&Math.random()<0.12)spawnWizard()}
+  if(mode.bossrush&&spawnT<=0&&monsters.length<30){
+    spawnT=1.2;spawnMonster(pickType(time*2))}
   /* horde events */
-  if(time>=hordeNext){hordeNext+=120;hordeEnd=time+8;hordeDir=Math.random()*Math.PI*2;hordeSpawnT=0;
+  if(!mode.bossrush&&time>=hordeNext){hordeNext+=120;hordeEnd=time+8;hordeDir=Math.random()*Math.PI*2;hordeSpawnT=0;
     addFloat(player.x,player.y-84,'HORDE INCOMING!','#ff4b2e',1.5);
     $('#hud-timer').classList.add('horde');SFX.boom()}
   if(hordeEnd>0){
@@ -1989,14 +2123,27 @@ function update(dt){
           speed:MTYPES.crab.speed*mode.pace*1.9,dmg:MTYPES.crab.dmg,xp:1,r:MTYPES.crab.r,
           elite:false,scale:1,anim:Math.random()*10,hitT:0,kx:0,ky:0,boss:false,horde:true})}
     }else{hordeEnd=0;$('#hud-timer').classList.remove('horde')}}
-  eliteT+=dt;
-  if(eliteT>=60){eliteT=0;spawnMonster(time>200?'purplecrab':'redcrab',true)}
-  /* bosses: three across the run + midbosses */
-  const bossSched=[[mode.dur*0.33,'crabking',false],[mode.dur*0.66,'wizardking',false],[mode.dur-40,'demon',true]];
-  bossSched.forEach(([bt,kind,fin],i)=>{
-    if(time>=bt&&!bossSpawned[i]){bossSpawned[i]=true;spawnBoss(kind,fin)}});
-  midT+=dt;
-  if(midT>=150){midT=0;spawnMidboss()}
+  if(!mode.bossrush){eliteT+=dt;
+  if(eliteT>=60){eliteT=0;spawnMonster(time>200?'purplecrab':'redcrab',true)}}
+  /* bosses */
+  const KINDCYCLE=['crabking','wizardking','demon'];
+  if(mode.bossrush){
+    brT+=dt;brMidT+=dt;
+    if(brT>=55){brT=0;spawnBoss(KINDCYCLE[bossCycle++%3],false)}
+    if(brMidT>=22){brMidT=0;spawnMidboss()}
+    if(time>=mode.dur-45&&!bossSpawned[0]){bossSpawned[0]=true;spawnBoss('demon',true)}
+  }else if(mode.endless){
+    brT+=dt;
+    if(brT>=170){brT=0;spawnBoss(KINDCYCLE[bossCycle++%3],false)}
+    midT+=dt;
+    if(midT>=110){midT=0;spawnMidboss()}
+  }else{
+    const bossSched=[[mode.dur*0.33,'crabking',false],[mode.dur*0.66,'wizardking',false],[mode.dur-40,'demon',true]];
+    bossSched.forEach(([bt,kind,fin],i)=>{
+      if(time>=bt&&!bossSpawned[i]){bossSpawned[i]=true;spawnBoss(kind,fin)}});
+    midT+=dt;
+    if(midT>=150){midT=0;spawnMidboss()}
+  }
   /* monsters */
   const cell=44,gridMap=new Map();
   for(let i=0;i<monsters.length;i++){
@@ -2092,18 +2239,19 @@ function update(dt){
       g.x+=(player.x-g.x)/d*sp*dt;g.y+=(player.y-g.y)/d*sp*dt}
     if(d2p<22*22){
       gems.splice(i,1);SFX.gem();
-      pstats.gems++;missionProgress('gems',1);
+      pstats.gems++;missionProgress('gems',1);campEvent('gems',1);
       player.xp+=g.val*player.xpMul;
       while(player.xp>=xpNeed(player.lv)){
         player.xp-=xpNeed(player.lv);player.lv++;levelQueue++;SFX.lvl();
-        if(player.lv>pstats.bestLv)pstats.bestLv=player.lv}
+        if(player.lv>pstats.bestLv)pstats.bestLv=player.lv;
+        campEvent('level',player.lv)}
       if(levelQueue>0&&state==='run')showLevelUp()}}
   /* pickups */
   for(let i=pickups.length-1;i>=0;i--){
     const pk=pickups[i];pk.t+=dt;
     if(dist2(pk.x,pk.y,player.x,player.y)<26*26){
       if(pk.kind==='coin'){
-        pickups.splice(i,1);coins++;runCoins++;pstats.coinsTotal++;
+        pickups.splice(i,1);coins++;runCoins++;pstats.coinsTotal++;campEvent('coins',1);
         blip(1180,0.06,'sine',0.1,200);continue}
       if(pk.kind==='chest'){
         pickups.splice(i,1);
@@ -2120,7 +2268,9 @@ function update(dt){
   /* meta trackers */
   noHitT+=dt;
   if(noHitT>pstats.maxNoHit)pstats.maxNoHit=Math.floor(noHitT);
-  if(Math.floor(time)>lastSurvSec){lastSurvSec=Math.floor(time);missionProgress('survive',lastSurvSec)}
+  if(Math.floor(time)>lastSurvSec){lastSurvSec=Math.floor(time);missionProgress('survive',lastSurvSec);
+    campEvent('survive',lastSurvSec);
+    if(mode.endless)campEvent('endless',lastSurvSec)}
   /* HUD text */
   $('#hud-timer').textContent=fmtTime(time);
   $('#kill-num').textContent=kills;
@@ -2134,7 +2284,7 @@ function draw(){
   const sx=(Math.random()-0.5)*shake,sy=(Math.random()-0.5)*shake;
   const ox=W/2-cam.x+sx,oy=H/2-cam.y+sy;
   /* ground */
-  const tile=mode.cursed?groundTileCursed:groundTile,T=192;
+  const tile=TILES[currentBiome]||groundTile,T=192;
   const x0=Math.floor((cam.x-W/2)/T)*T,y0=Math.floor((cam.y-H/2)/T)*T;
   for(let x=x0;x<cam.x+W/2+T;x+=T)for(let y=y0;y<cam.y+H/2+T;y+=T)
     cx.drawImage(tile,Math.round(x+ox),Math.round(y+oy));
@@ -2150,7 +2300,7 @@ function draw(){
       cx.fillRect(f.x+ox+Math.cos(a)*r,f.y+oy+Math.sin(a)*r-Math.random()*14,4,6)}}
   /* gems */
   for(const g of gems){
-    const sp=g.big?SP.gemBig:SP.gem;
+    const sp=gemSprite(g.col,g.big);
     const bob=Math.sin(g.t*5)*2;
     cx.drawImage(sp,Math.round(g.x+ox-sp.width/2),Math.round(g.y+oy-sp.height/2+bob))}
   /* pickups */
