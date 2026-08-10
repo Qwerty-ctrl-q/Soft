@@ -12,7 +12,7 @@ A single-file HTML5 canvas survivors-like — a fan remake inspired by the gamep
 - A campaign map screen: 100 mission nodes on a winding path, unlocked as you progress; tap a node to see the objective and START it in the right mode
 - A 100-mission campaign line with varied objectives (kill counts per monster type, boss hunts, mode wins, no-hit runs, evolutions) and growing coin rewards
 - Every monster type drops its own gem color
-- 10 playable heroes of different races (Mate, Ninja, Robot, Ghost, Demon, Alien, Skeleton, Golem), each a full humanoid pixel character with race outfit, held weapon and a 4-frame walk cycle, Health/Armor/Speed/Luck traits, a unique starting weapon and a unique perk (regeneration, undead second life, pyromania, fast dash, etc.)
+- 10 playable heroes of different races (Mate, Ninja, Robot, Ghost, Demon, Alien, Skeleton, Golem), each with AI-generated pixel sprite sheets (idle / two walk frames / attack), unique race look and held weapon; source frames live in assets/frames, Health/Armor/Speed/Luck traits, a unique starting weapon and a unique perk (regeneration, undead second life, pyromania, fast dash, etc.)
 - 12 auto-attacking weapons with 16 upgrade levels each: Knife, Machete, Sword, Bat, Shuriken, Grenade, Bazooka, Molotov, Laser, Drone, Frost Aura, Orbital
 - 11 passives: Damage+, Speed+, Health+, Armor+, Magnet+, Cooldown+, Luck+, Area+, Amount+, Crit Chance+, Crit Damage+
 - Weapon evolutions: max a weapon (lv.8) while holding its paired passive, then grab the chest from an elite/boss (e.g. Sword -> Excalibur, Grenade -> Cluster Bomb)
