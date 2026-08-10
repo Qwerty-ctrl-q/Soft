@@ -2357,7 +2357,13 @@ function update(dt){
     }
     /* touch player */
     const pr=m.r+16;
-    if(dist2(m.x,m.y,player.x,player.y)<pr*pr)hurtPlayer(m.dmg);
+    const d2p=dist2(m.x,m.y,player.x,player.y);
+    if(d2p<pr*pr)hurtPlayer(m.dmg);
+    /* big bodies are solid: bosses and mini-bosses shove the player out */
+    if((m.boss||m.mid)&&d2p<pr*pr&&d2p>1){
+      const d=Math.sqrt(d2p),push=(pr-d);
+      player.x+=(player.x-m.x)/d*push;
+      player.y+=(player.y-m.y)/d*push}
   }
   /* wizard orbs */
   for(let i=orbs.length-1;i>=0;i--){
